@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout } from '../store/authSlice'
+import { useLayoutEffect } from 'react';
 
 export default function Layout() {
   const { user } = useSelector((state) => state.auth)
@@ -15,49 +16,66 @@ export default function Layout() {
     navigate('/')
   }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
-      <nav className="bg-stone-900 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="text-xl font-bold tracking-tight">SWC Wines</Link>
-            <div className="flex items-center gap-6">
-              <Link to="/wines" className="hover:text-amber-300 transition">Wines</Link>
-              <Link to="/producers" className="hover:text-amber-300 transition">Producers</Link>
-              <Link to="/contact" className="hover:text-amber-300 transition">Contact</Link>
-              <Link to="/cart" className="hover:text-amber-300 transition relative">
-                Cart
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-4 bg-amber-500 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-              {user ? (
-                <div className="flex items-center gap-3">
-                  {user.role === 'admin' && (
-                    <Link to="/admin" className="text-amber-300 hover:text-amber-200 text-sm">Admin</Link>
-                  )}
-                  <Link to="/orders" className="hover:text-amber-300 transition text-sm">Orders</Link>
-                  <span className="text-stone-400 text-sm">{user.name}</span>
-                  <button onClick={handleLogout} className="text-stone-400 hover:text-white text-sm">Logout</button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link to="/login" className="hover:text-amber-300 transition">Login</Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+  useLayoutEffect(() => {
+    const footerH = document.querySelector('footer').offsetHeight;
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    document.querySelector('main').style.paddingBottom = `${footerH + 30}px`;
+  }, []);
+
+  return (
+    <div className="height-[100dvh] min-h-[100dvh] flex flex-col bg-stone-50">
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-22 w-full">
         <Outlet />
       </main>
+      
+      <div className="fixed top-2 left-2 p-4 rounded-full bg-stone-900 text-white">
+        <Link to="/" className="hover:text-amber-300 transition relative">
+          SWC
+        </Link>
+      </div>
 
-      <footer className="bg-stone-900 text-stone-400 py-6 text-center text-sm">
-        &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
+      <div className="fixed top-12 right-2 p-4 rounded-full bg-stone-900 text-white">
+        <Link to="/cart" className="hover:text-amber-300 transition relative">
+          Cart
+          {cartCount > 0 && (
+            <span className="absolute bg-amber-500 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {cartCount}
+            </span>
+          )}
+        </Link>
+      </div>
+
+      <div className="fixed top-2 right-12 p-4 rounded-full bg-stone-900 text-white">
+        {user ? (
+          <div className="flex items-center gap-3">
+            {user.role === 'admin' && (
+              <Link to="/admin" className="text-amber-300 hover:text-amber-200 text-sm">Admin</Link>
+            )}
+            <Link to="/orders" className="hover:text-amber-300 transition text-sm">Orders</Link>
+            <span className="text-stone-400 text-sm">{user.name}</span>
+            <button onClick={handleLogout} className="text-stone-400 hover:text-white text-sm">Logout</button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="hover:text-amber-300 transition">Login</Link>
+          </div>
+        )}
+      </div>
+
+      <footer className="bg-stone-900 text-stone-400 text-center">
+        <nav className="bg-stone-900 text-white shadow-md flex justify-center">
+          <div className="flex items-center justify-between py-6 pb-3 w-full">
+            <div className="w-full flex flex-wrap gap-3 px-3 text-2xl uppercase tracking-widest leading-none">
+              <Link to="/wines" className="hover:text-amber-300 transition w-full text-left">Wines</Link>
+              <Link to="/producers" className="hover:text-amber-300 transition w-full text-left">Producers</Link>
+              <Link to="/contact" className="hover:text-amber-300 transition w-full text-left">Contact</Link>
+            </div>
+          </div>
+        </nav>
+        <div className="text-tiny text-left">
+          &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
+        </div>
       </footer>
     </div>
   )

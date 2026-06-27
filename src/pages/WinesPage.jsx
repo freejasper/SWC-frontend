@@ -2,23 +2,25 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchWines } from '../store/winesSlice'
+import { fetchProducers } from '../store/producersSlice'
 import { fetchRegions, fetchVarietals, fetchColours } from '../store/tagsSlice'
 
 export default function WinesPage() {
   const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
   const { list: wines, loading } = useSelector((state) => state.wines)
+  const { list: producers } = useSelector((state) => state.producers)
   const { regions, varietals, colours } = useSelector((state) => state.tags)
 
   const filters = {
     region: searchParams.get('region') || '',
     varietal: searchParams.get('varietal') || '',
     colour: searchParams.get('colour') || '',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
+    producer: searchParams.get('producer') || '',
   }
 
   useEffect(() => {
+    dispatch(fetchProducers())
     dispatch(fetchRegions())
     dispatch(fetchVarietals())
     dispatch(fetchColours())
@@ -29,8 +31,8 @@ export default function WinesPage() {
     if (filters.region) params.region = filters.region
     if (filters.varietal) params.varietal = filters.varietal
     if (filters.colour) params.colour = filters.colour
-    if (filters.minPrice) params.minPrice = filters.minPrice
-    if (filters.maxPrice) params.maxPrice = filters.maxPrice
+    if (filters.producer) params.producer = filters.producer
+
     dispatch(fetchWines(params))
   }, [dispatch, searchParams])
 
@@ -48,13 +50,15 @@ export default function WinesPage() {
   const hasFilters = Object.values(filters).some(Boolean)
 
   return (
-    <div className="flex gap-8">
-      <aside className="w-64 shrink-0">
-        <h2 className="text-lg font-semibold text-stone-900 mb-4">Filters</h2>
+    <div className="flex flex-wrap gap-5">
+      <div className="w-full">
+        <h1 className="text-3xl font-bold text-stone-900">Our Wines</h1>
+      </div>
+      <aside className="w-full shrink-0">
+        <h2 className="text-lg font-semibold text-stone-900">Filters</h2>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex gap-2">
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">Region</label>
             <select
               value={filters.region}
               onChange={(e) => updateFilter('region', e.target.value)}
@@ -68,7 +72,6 @@ export default function WinesPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">Varietal</label>
             <select
               value={filters.varietal}
               onChange={(e) => updateFilter('varietal', e.target.value)}
@@ -82,7 +85,6 @@ export default function WinesPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">Colour</label>
             <select
               value={filters.colour}
               onChange={(e) => updateFilter('colour', e.target.value)}
@@ -96,25 +98,16 @@ export default function WinesPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">Min Price</label>
-            <input
-              type="number"
-              value={filters.minPrice}
-              onChange={(e) => updateFilter('minPrice', e.target.value)}
+            <select
+              value={filters.producer}
+              onChange={(e) => updateFilter('producer', e.target.value)}
               className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
-              placeholder="$0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">Max Price</label>
-            <input
-              type="number"
-              value={filters.maxPrice}
-              onChange={(e) => updateFilter('maxPrice', e.target.value)}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
-              placeholder="$999"
-            />
+            >
+              <option value="">All Producers</option>
+              {producers.map((p) => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
           {hasFilters && (
@@ -129,8 +122,6 @@ export default function WinesPage() {
       </aside>
 
       <div className="flex-1">
-        <h1 className="text-3xl font-bold text-stone-900 mb-8">Our Wines</h1>
-
         {loading ? (
           <div className="text-center py-12 text-stone-500">Loading wines...</div>
         ) : wines.length === 0 ? (
