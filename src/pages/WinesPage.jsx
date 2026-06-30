@@ -52,17 +52,16 @@ export default function WinesPage() {
   return (
     <div className="flex flex-wrap gap-5">
       <div className="w-full">
-        <h1 className="text-3xl font-bold text-stone-900">Our Wines</h1>
+        <h1 className="text-5xl font-bold">Our Wines</h1>
       </div>
-      <aside className="w-full shrink-0">
-        <h2 className="text-lg font-semibold text-stone-900">Filters</h2>
-
-        <div className="space-y-4 flex gap-2">
+      {/* <aside className="w-full shrink-0">
+        <div className="flex gap-2 items-end">
+          <h2 className="font-semibold underline m-0 leading-none pb-1">Filters:</h2>
           <div>
             <select
               value={filters.region}
               onChange={(e) => updateFilter('region', e.target.value)}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
+              className="w-full text-sm m-0 min-w-26"
             >
               <option value="">All Regions</option>
               {regions.map((r) => (
@@ -75,7 +74,7 @@ export default function WinesPage() {
             <select
               value={filters.varietal}
               onChange={(e) => updateFilter('varietal', e.target.value)}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
+              className="w-full text-sm m-0 min-w-26"
             >
               <option value="">All Varietals</option>
               {varietals.map((v) => (
@@ -88,7 +87,7 @@ export default function WinesPage() {
             <select
               value={filters.colour}
               onChange={(e) => updateFilter('colour', e.target.value)}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
+              className="w-full text-sm m-0 min-w-26"
             >
               <option value="">All Colours</option>
               {colours.map((c) => (
@@ -101,7 +100,7 @@ export default function WinesPage() {
             <select
               value={filters.producer}
               onChange={(e) => updateFilter('producer', e.target.value)}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm"
+              className="w-full text-sm m-0 min-w-26"
             >
               <option value="">All Producers</option>
               {producers.map((p) => (
@@ -113,12 +112,132 @@ export default function WinesPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="w-full bg-stone-200 text-stone-700 rounded px-3 py-2 text-sm hover:bg-stone-300 transition"
+              className="bg-stone-200 text-stone-700 rounded px-3 text-sm hover:bg-stone-300 transition"
             >
               Clear Filters
             </button>
           )}
         </div>
+      </aside> */}
+
+      <aside className="w-full shrink-0">
+        <h2 className="font-semibold underline m-0 leading-none pb-3">Filters:</h2>
+        <div className="flex gap-2 flex-wrap bg-offwhite p-3">
+
+          <form 
+            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
+              <label>
+                  <input
+                      type="radio"
+                      name="producer"
+                      value=""
+                      checked={filters.producer === ''}
+                      onChange={(e) => updateFilter('producer', e.target.value)}
+                      />
+                  <span>All Producers</span>
+              </label>
+              {producers.map((p) => (
+                  <label key={p._id}>
+                      <input
+                          type="radio"
+                          name="producer" 
+                          value={p._id}
+                          checked={filters.producer === p._id}
+                          onChange={(e) => updateFilter('producer', e.target.value)}
+                          />
+                      <span>{p.name}</span>
+                  </label>
+              ))}
+          </form>
+
+          <form 
+            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
+              <label>
+                  <input
+                      type="radio"
+                      name="region"
+                      value=""
+                      checked={filters.region === ''}
+                      onChange={(e) => updateFilter('region', e.target.value)}
+                      />
+                  <span>All Regions</span>
+              </label>
+              {regions.map((r) => (
+                  <label
+                      key={r._id}>
+                      <input 
+                          type="radio" 
+                          value={r._id}
+                          name="region"
+                          checked={filters.region === r._id}
+                          onChange={(e) => updateFilter('region', e.target.value)}
+                          />
+                      <span>{r.name}</span>
+                  </label>
+              ))}
+          </form>
+
+          <form 
+            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
+              <label>
+                  <input
+                      type="radio"
+                      name="varietal"
+                      value=""
+                      checked={filters.varietal === ''}
+                      onChange={(e) => updateFilter('varietal', e.target.value)}
+                                            />
+                  <span>All Varietals</span>
+              </label>
+              {varietals.map((v) => (
+                  <label 
+                      key={v._id}>
+                      <input 
+                          type="radio"
+                          name="varietal"
+                          value={v._id}
+                          checked={filters.varietal === v._id}
+                          onChange={(e) => updateFilter('varietal', e.target.value)}
+                          />
+                      <span>{v.name}</span>
+                  </label>
+              ))}
+          </form>
+
+          <form 
+            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
+              <label>
+                  <input
+                      type="radio"
+                      name="colour"
+                      value=""
+                      checked={filters.colour === ''}
+                      onChange={(e) => updateFilter('colour', e.target.value)}
+                      />
+                  <span>All Colours</span>
+              </label>
+              {colours.map((c) => (
+                  <label key={c._id}>
+                      <input
+                          type="radio"
+                          name="colour"
+                          value={c._id}
+                          checked={filters.colour === c._id}
+                          onChange={(e) => updateFilter('colour', e.target.value)}
+                          /> 
+                      <span>{c.name}</span>
+                  </label>
+              ))}
+          </form>
+
+        </div>
+        {hasFilters && (
+          <button
+              onClick={clearFilters}
+              className="bg-stone-200 text-stone-700 rounded px-3 text-sm hover:bg-stone-300 transition"
+              >
+          Clear Filters</button>
+        )}
       </aside>
 
       <div className="flex-1">

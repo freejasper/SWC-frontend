@@ -1,15 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --text-tiny: 0.55rem; 
+  --text-tiny: 0.55rem;
+  --color-red-primary: #DB3605;
+  --color-red-secondary: #BF0503;
+  --color-offwhite: #FCE8E8;
+  --color-offblack: #1A1B1B;
 }
 
 @layer utilities {
+    html, body {
+        background-color: var(--color-red-primary);
+    }
+    h1 {
+        color: var(--color-red-secondary);
+    }
+    p {
+        color: var(--color-offblack);
+        font-weight: 200;
+    }
     footer {
         position: fixed;
         bottom: 0;
         width: 100%;
         padding-bottom: calc(env(safe-area-inset-bottom, 5px) + 5px);
         padding-left: 5px;
+    }
+    select {
+        border: none;
+        padding: 0 !important;
+        margin: 0 !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
+}
+
+@layer base {
+    select {
+        border: none;
+        padding: 0 !important;
+        margin: 0 !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
     }
 }
