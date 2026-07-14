@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchWines } from '../store/winesSlice'
 import { fetchProducers } from '../store/producersSlice'
 import { fetchRegions, fetchVarietals, fetchColours } from '../store/tagsSlice'
+import { useWindowWidth } from '../utilities/useWindowWidth';
 
 export default function WinesPage() {
   const dispatch = useDispatch()
@@ -11,12 +12,13 @@ export default function WinesPage() {
   const { list: wines, loading } = useSelector((state) => state.wines)
   const { list: producers } = useSelector((state) => state.producers)
   const { regions, varietals, colours } = useSelector((state) => state.tags)
+  const { user } = useSelector((state) => state.auth)
 
   const filters = {
+    producer: searchParams.get('producer') || '',
     region: searchParams.get('region') || '',
     varietal: searchParams.get('varietal') || '',
-    colour: searchParams.get('colour') || '',
-    producer: searchParams.get('producer') || '',
+    colour: searchParams.get('colour') || ''
   }
 
   useEffect(() => {
@@ -24,14 +26,14 @@ export default function WinesPage() {
     dispatch(fetchRegions())
     dispatch(fetchVarietals())
     dispatch(fetchColours())
-  }, [dispatch])
+  }, [dispatch])  
 
   useEffect(() => {
     const params = {}
+    if (filters.producer) params.producer = filters.producer
     if (filters.region) params.region = filters.region
     if (filters.varietal) params.varietal = filters.varietal
     if (filters.colour) params.colour = filters.colour
-    if (filters.producer) params.producer = filters.producer
 
     dispatch(fetchWines(params))
   }, [dispatch, searchParams])
@@ -49,229 +51,281 @@ export default function WinesPage() {
 
   const hasFilters = Object.values(filters).some(Boolean)
 
+  const [showFilters, setShowFilters] = useState('grid-closed');
+
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
+
+  const wineFiltersRef = useRef(null);
+  const asideRef = useRef(null);
+  
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      const wineFilters = wineFiltersRef.current.getBoundingClientRect();
+      const screenHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      if (wineFilters.top <= (screenHeight * 0.4)) {
+        if (showFilters === 'grid-open') {
+          if (asideRef.current) {
+            asideRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+        if (showFilters === 'grid-open') setShowFilters('grid-closed');
+        if (filterIconRef.current) {
+          filterIconRef.current.classList.remove('filter-icon-open');
+        }
+      }
+    }
+    window.addEventListener('scroll', handleWindowScroll);
+    return () => {
+      window.removeEventListener('scroll', handleWindowScroll);
+    }
+  },[showFilters]);
+
+  const filterIconRef = useRef(null);
+
+  const handleFilterClick = () => {
+    if (showFilters === 'grid-closed') {
+      setShowFilters('grid-open');
+      if (filterIconRef.current) {
+        filterIconRef.current.classList.add('filter-icon-open');
+      }
+    } else {
+      setShowFilters('grid-closed');
+      if (filterIconRef.current) {
+        filterIconRef.current.classList.remove('filter-icon-open');
+      }
+    }
+  }
+
   return (
     <div className="flex flex-wrap gap-5">
       <div className="w-full">
         <h1 className="text-5xl font-bold">Our Wines</h1>
       </div>
-      {/* <aside className="w-full shrink-0">
-        <div className="flex gap-2 items-end">
-          <h2 className="font-semibold underline m-0 leading-none pb-1">Filters:</h2>
-          <div>
-            <select
-              value={filters.region}
-              onChange={(e) => updateFilter('region', e.target.value)}
-              className="w-full text-sm m-0 min-w-26"
-            >
-              <option value="">All Regions</option>
-              {regions.map((r) => (
-                <option key={r._id} value={r._id}>{r.name}</option>
-              ))}
-            </select>
-          </div>
 
-          <div>
-            <select
-              value={filters.varietal}
-              onChange={(e) => updateFilter('varietal', e.target.value)}
-              className="w-full text-sm m-0 min-w-26"
-            >
-              <option value="">All Varietals</option>
-              {varietals.map((v) => (
-                <option key={v._id} value={v._id}>{v.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={filters.colour}
-              onChange={(e) => updateFilter('colour', e.target.value)}
-              className="w-full text-sm m-0 min-w-26"
-            >
-              <option value="">All Colours</option>
-              {colours.map((c) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={filters.producer}
-              onChange={(e) => updateFilter('producer', e.target.value)}
-              className="w-full text-sm m-0 min-w-26"
-            >
-              <option value="">All Producers</option>
-              {producers.map((p) => (
-                <option key={p._id} value={p._id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-
+      <aside 
+      ref={asideRef}
+      className="w-full shrink-0">
+        <div className="flex gap-4 pb-4 items-baseline">
+          <button 
+            className="zero-style-button filter-button"
+            onClick={handleFilterClick} >
+              <div className="button-text">Filters</div>
+              <div ref={filterIconRef} className="filter-icon">+</div>
+          </button>
           {hasFilters && (
+          <>
+            <div className="flex gap-1 m-0 p-0">
+              {Object.entries(filters).map(([key, value]) => {
+                if (!value) return null
+                let filterVal = '';
+                if (key === 'producer') filterVal = producers.find((p) => p._id === value);
+                if (key === 'region') filterVal = regions.find((r) => r._id === value);
+                if (key === 'varietal') filterVal = varietals.find((v) => v._id === value);
+                if (key === 'colour') filterVal = colours.find((c) => c._id === value);
+                if (filterVal) {
+                  return (
+                    <div
+                      key={key}
+                      className="leading-none h-fit m-0 p-0 font-light text-xs">
+                        / {filterVal.name}
+                    </div>
+                  )
+                }
+                return null
+              })}
+            </div>
             <button
-              onClick={clearFilters}
-              className="bg-stone-200 text-stone-700 rounded px-3 text-sm hover:bg-stone-300 transition"
-            >
-              Clear Filters
-            </button>
+                onClick={clearFilters}
+                className="zero-style-button"
+                >
+            Clear Filters</button>
+          </>
           )}
         </div>
-      </aside> */}
+        <div
+          id="outer-wine-filters"
+          className={`grid ${showFilters} box-border`}>
+          <div
+            id="inner-wine-filters" 
+            className="overflow-hidden">
+            <div
+              className="flex gap-2 flex-wrap">
 
-      <aside className="w-full shrink-0">
-        <h2 className="font-semibold underline m-0 leading-none pb-3">Filters:</h2>
-        <div className="flex gap-2 flex-wrap bg-offwhite p-3">
+                <form 
+                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
+                    <div
+                      className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                      Producers
+                    </div>
+                    <div
+                      className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                      {producers.map((p) => (
+                        <label 
+                          key={p._id}
+                          className="flex items-center gap-1 grow cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="producer" 
+                                value={p._id}
+                                checked={filters.producer === p._id}
+                                onChange={(e) => updateFilter('producer', e.target.checked ? e.target.value : '')}
+                                className={filters.producer === p._id ? 'opacity-100' : 'opacity-0'}
+                                />
+                            <span
+                              className="">
+                              {p.name}
+                            </span>
+                        </label>
+                    ))}
+                    </div>
+                </form>
 
-          <form 
-            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
-              <label>
-                  <input
-                      type="radio"
-                      name="producer"
-                      value=""
-                      checked={filters.producer === ''}
-                      onChange={(e) => updateFilter('producer', e.target.value)}
-                      />
-                  <span>All Producers</span>
-              </label>
-              {producers.map((p) => (
-                  <label key={p._id}>
-                      <input
-                          type="radio"
-                          name="producer" 
-                          value={p._id}
-                          checked={filters.producer === p._id}
-                          onChange={(e) => updateFilter('producer', e.target.value)}
-                          />
-                      <span>{p.name}</span>
-                  </label>
-              ))}
-          </form>
+                <form 
+                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
+                    <div
+                      className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                      Regions
+                    </div>
+                    <div
+                      className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                      {regions.map((r) => (
+                          <label
+                              key={r._id}
+                              className="flex items-center gap-1 grow cursor-pointer">
+                              <input 
+                                  type="checkbox" 
+                                  value={r._id}
+                                  name="region"
+                                  checked={filters.region === r._id}
+                                  onChange={(e) => updateFilter('region', e.target.checked ? e.target.value : '')}
+                                  className={filters.region === r._id ? 'opacity-100' : 'opacity-0'}
+                                  />
+                              <span
+                                className="">
+                                {r.name}
+                              </span>
+                          </label>
+                      ))}
+                      </div>
+                </form>
 
-          <form 
-            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
-              <label>
-                  <input
-                      type="radio"
-                      name="region"
-                      value=""
-                      checked={filters.region === ''}
-                      onChange={(e) => updateFilter('region', e.target.value)}
-                      />
-                  <span>All Regions</span>
-              </label>
-              {regions.map((r) => (
-                  <label
-                      key={r._id}>
-                      <input 
-                          type="radio" 
-                          value={r._id}
-                          name="region"
-                          checked={filters.region === r._id}
-                          onChange={(e) => updateFilter('region', e.target.value)}
-                          />
-                      <span>{r.name}</span>
-                  </label>
-              ))}
-          </form>
+                <form 
+                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
+                  <div
+                    className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                    Varietals
+                  </div>
+                  <div
+                    className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                    {varietals.map((v) => (
+                        <label 
+                            key={v._id}
+                            className="flex items-center gap-1 grow cursor-pointer">
+                            <input 
+                                type="checkbox"
+                                name="varietal"
+                                value={v._id}
+                                checked={filters.varietal === v._id}
+                                onChange={(e) => updateFilter('varietal', e.target.checked ? e.target.value : '')}
+                                className={filters.varietal === v._id ? 'opacity-100' : 'opacity-0'}
+                                />
+                            <span
+                              className="">
+                              {v.name}
+                            </span>
+                        </label>
+                    ))}
+                    </div>
+                </form>
 
-          <form 
-            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
-              <label>
-                  <input
-                      type="radio"
-                      name="varietal"
-                      value=""
-                      checked={filters.varietal === ''}
-                      onChange={(e) => updateFilter('varietal', e.target.value)}
-                                            />
-                  <span>All Varietals</span>
-              </label>
-              {varietals.map((v) => (
-                  <label 
-                      key={v._id}>
-                      <input 
-                          type="radio"
-                          name="varietal"
-                          value={v._id}
-                          checked={filters.varietal === v._id}
-                          onChange={(e) => updateFilter('varietal', e.target.value)}
-                          />
-                      <span>{v.name}</span>
-                  </label>
-              ))}
-          </form>
+                <form 
+                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1">
+                  <div
+                    className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                    Colours
+                  </div>
+                  <div
+                    className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                    {colours.map((c) => (
+                        <label 
+                          key={c._id}
+                          className="flex items-center gap-1 grow cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="colour"
+                                value={c._id}
+                                checked={filters.colour === c._id}
+                                onChange={(e) => updateFilter('colour', e.target.checked ? e.target.value : '')}
+                                className={filters.colour === c._id ? 'opacity-100' : 'opacity-0'}
+                                /> 
+                            <span
+                              className="">
+                              {c.name}
+                            </span>
+                        </label>
+                    ))}
+                    </div>
+                </form>
 
-          <form 
-            className="w-[calc(50%-1rem)] text-sm m-0 min-w-26 flex flex-col" >
-              <label>
-                  <input
-                      type="radio"
-                      name="colour"
-                      value=""
-                      checked={filters.colour === ''}
-                      onChange={(e) => updateFilter('colour', e.target.value)}
-                      />
-                  <span>All Colours</span>
-              </label>
-              {colours.map((c) => (
-                  <label key={c._id}>
-                      <input
-                          type="radio"
-                          name="colour"
-                          value={c._id}
-                          checked={filters.colour === c._id}
-                          onChange={(e) => updateFilter('colour', e.target.value)}
-                          /> 
-                      <span>{c.name}</span>
-                  </label>
-              ))}
-          </form>
-
+            </div>
+          </div>
+          <div
+            ref={wineFiltersRef}
+            className="w-0 h-0 m-0 p-0"></div>
         </div>
-        {hasFilters && (
-          <button
-              onClick={clearFilters}
-              className="bg-stone-200 text-stone-700 rounded px-3 text-sm hover:bg-stone-300 transition"
-              >
-          Clear Filters</button>
-        )}
       </aside>
 
       <div className="flex-1">
         {loading ? (
-          <div className="text-center py-12 text-stone-500">Loading wines...</div>
+          <div className="text-center py-12 text-offwhite">Loading wines...</div>
         ) : wines.length === 0 ? (
-          <div className="text-center py-12 text-stone-500">No wines match your filters.</div>
+          <div className="text-center py-12 text-offwhite">No wines match your filters.</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-6">
             {wines.map((wine) => (
               <Link
                 key={wine._id}
                 to={`/wines/${wine._id}`}
-                className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition group"
+                className="overflow-hidden transition group relative"
               >
+                <div
+                  className="flex items-center justify-center absolute left-[55%] top-[25%] min-w-10 min-h-10 rounded-full bg-blue-primary price">
+                    <span className="text-offwhite text-xs text-lg">${wine.price}</span>
+                </div>
                 {wine.imageUrl && (
-                  <img src={wine.imageUrl} alt={wine.name} className="w-full h-48 object-cover" />
+                  <img src={wine.imageUrl} alt={wine.name} className="w-full h-94 object-cover" />
                 )}
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-stone-900 group-hover:text-amber-600 transition">
+                {!wine.imageUrl && (
+                  <img src='../../public/wine_bottle.webp' alt={wine.name} className="w-full h-94 object-contain" />
+                )}
+                <div className="flex items-center flex-wrap">
+                  <h3 className="text-2xl font-medium text-red-secondary uppercase group-hover:text-offwhite transition w-full text-center tracking-wider">
                     {wine.name}
                   </h3>
-                  <p className="text-stone-500 text-sm mt-1">{wine.producer?.name}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs bg-stone-100 px-2 py-0.5 rounded">{wine.varietal?.name}</span>
-                    <span className="text-xs bg-stone-100 px-2 py-0.5 rounded">{wine.colour?.name}</span>
-                    <span className="text-xs bg-stone-100 px-2 py-0.5 rounded">{wine.region?.name}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-amber-600 font-bold text-lg">${wine.price}</span>
-                    <span className={`text-xs ${wine.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {wine.stock > 0 ? `${wine.stock} in stock` : 'Out of stock'}
+                  <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>
+                  <div className="flex items-center gap-2 w-full items-center justify-center">
+                    <span className="text-xs font-light px-2 py-0.5">
+                      {wine.varietal?.name} / {wine.colour?.name} / {wine.region?.name}
                     </span>
                   </div>
+                  {user && 
+                    <div>
+                      {user.role === 'admin' &&
+                        <span className="">
+                          {wine.stock > 0 ? `${wine.stock}` : 'Out of stock'}
+                        </span>
+                      }
+                      {user.role !== 'admin' &&
+                        <span className="">
+                          {wine.stock > 0 ? null : 'Out of stock'}
+                        </span>
+                      }
+                    </div>
+                  }
+                  
+                  
                 </div>
               </Link>
             ))}

@@ -2,6 +2,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout } from '../store/authSlice'
 import { useLayoutEffect } from 'react';
+import { useWindowWidth } from '../utilities/useWindowWidth';
 
 export default function Layout() {
   const { user } = useSelector((state) => state.auth)
@@ -21,6 +22,9 @@ export default function Layout() {
 
     document.querySelector('main').style.paddingBottom = `${footerH + 30}px`;
   }, []);
+
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
 
   return (
     <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0">
@@ -63,8 +67,11 @@ export default function Layout() {
         )}
       </div>
 
-      <footer className="bg-offwhite text-red-primary text-center m-0 p-0">
-        <nav className="flex justify-center">
+      <footer className="text-center m-0 p-0">
+        <div className="text-tiny text-left p-1 text-offwhite">
+          &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
+        </div>
+        <nav className="bg-offwhite flex justify-center text-red-primary">
           <div className="flex items-center justify-between w-full">
             <div className="w-full flex flex-wrap text-3xl uppercase tracking-widest leading-none">
               <Link to="/wines" className="hover:text-offwhite hover:bg-red-primary transition w-full text-left p-3">Wines</Link>
@@ -73,9 +80,6 @@ export default function Layout() {
             </div>
           </div>
         </nav>
-        <div className="text-tiny text-left px-1">
-          &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
-        </div>
       </footer>
     </div>
   )
