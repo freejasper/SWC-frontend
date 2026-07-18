@@ -27,9 +27,9 @@ export default function Layout() {
   const isMobile = windowWidth < 768;
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0">
+    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden">
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-22 w-full">
+      <main className="flex-1 mx-auto pt-22 w-full overflow-auto">
         <Outlet />
       </main>
       
@@ -73,7 +73,7 @@ export default function Layout() {
         </div>
         <nav className="bg-offwhite flex justify-center text-red-primary">
           <div className="flex items-center justify-between w-full">
-            <div className="w-full flex flex-wrap text-3xl uppercase tracking-widest leading-none">
+            <div className={`w-full flex flex-wrap ${isMobile ? 'text-2xl' : 'text-3xl'} uppercase tracking-wider leading-none`}>
               <Link to="/wines" className="hover:text-offwhite hover:bg-red-primary transition w-full text-left p-3">Wines</Link>
               <Link to="/producers" className="hover:text-offwhite hover:bg-red-primary transition w-full text-left p-3">Producers</Link>
               <Link to="/contact" className="hover:text-offwhite hover:bg-red-primary transition w-full text-left p-3">Contact</Link>

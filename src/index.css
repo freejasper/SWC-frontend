@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: 'BRSonoma';
+    src: url('/BRSonoma-Bold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'BRSonoma';
+    src: url('/BRSonoma-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'BRSonoma';
+    src: url('/BRSonoma-SemiBold.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
 @theme {
   --text-tiny: 0.55rem;
   --color-red-primary: #DB3605;
@@ -7,18 +31,26 @@
   --color-offwhite: #FCE8E8;
   --color-offblack: #1A1B1B;
   --color-blue-primary: #0831ED;
+  
 }
 
 @layer utilities {
     html, body {
         background-color: var(--color-red-primary);
     }
-    h1 {
+    h1, h2, h3 {
         color: var(--color-red-secondary);
+        font-family: 'BRSonoma', sans-serif;
+        font-weight: 500;
     }
     p {
         color: var(--color-offblack);
-        font-weight: 200;
+        font-family: 'BRSonoma', sans-serif;
+        font-weight: 300;
+    }
+    nav a {
+        font-family: 'BRSonoma', sans-serif;
+        font-weight: 500;
     }
     footer {
         position: fixed;
@@ -26,6 +58,7 @@
         width: 100%;
         padding-bottom: calc(env(safe-area-inset-bottom, 5px) + 5px);
         padding-left: 5px;
+        z-index: 100;
     }
     select {
         border: none;
@@ -35,7 +68,7 @@
         -webkit-appearance: none !important;
     }
     #outer-wine-filters {
-        transition: grid-template-rows 0.3s ease-in-out;
+        transition: grid-template-rows 0.1s ease-in-out;
     }
     .grid-closed {
         grid-template-rows: 0fr;
@@ -75,14 +108,25 @@
         font-weight: 600;
     }
     .filter-icon-open {
-        transform: rotate(90deg) translateX(3%) translateY(-8%);
+        transform: rotate(90deg) translateX(5%) translateY(-12%);
     }
     .price {
-        transition: all 0.2s ease-in-out;
+        transition: transform 0.2s ease-in-out;
+        opacity: 0;
+        transform: scale(0.5);
     }
-    a:hover .price {
-        font-weight: 700;
-        transform: scale(1.6);
+    .price-active {
+        opacity: 1;
+        transform: scale(1);
+    }
+    .wines-list-container {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+    }
+    .wine-thumbnail {
+        scroll-snap-align: center;
     }
 }
 

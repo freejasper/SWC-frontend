@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchWines } from '../store/winesSlice'
@@ -36,7 +36,7 @@ export default function WinesPage() {
     if (filters.colour) params.colour = filters.colour
 
     dispatch(fetchWines(params))
-  }, [dispatch, searchParams])
+  }, [dispatch, searchParams, filters.producer, filters.region, filters.varietal, filters.colour])
 
   const updateFilter = (key, value) => {
     const newParams = new URLSearchParams(searchParams)
@@ -58,29 +58,40 @@ export default function WinesPage() {
 
   const wineFiltersRef = useRef(null);
   const asideRef = useRef(null);
-  
-  useEffect(() => {
-    const handleWindowScroll = () => {
-      const wineFilters = wineFiltersRef.current.getBoundingClientRect();
-      const screenHeight = window.innerHeight || document.documentElement.clientHeight;
+  const winesListRef = useRef(null);
 
-      if (wineFilters.top <= (screenHeight * 0.4)) {
-        if (showFilters === 'grid-open') {
-          if (asideRef.current) {
-            asideRef.current.scrollIntoView({ behavior: 'smooth' });
-          }
-        }
-        if (showFilters === 'grid-open') setShowFilters('grid-closed');
-        if (filterIconRef.current) {
-          filterIconRef.current.classList.remove('filter-icon-open');
-        }
+  useEffect(() => {
+    const winesList = winesListRef.current ? winesListRef.current : null;
+    const main = document.querySelector('main');
+
+    const toggleFilters = () => {
+      if (showFilters === 'grid-open') setShowFilters('grid-closed');
+      if (filterIconRef.current) {
+        filterIconRef.current.classList.remove('filter-icon-open');
       }
     }
-    window.addEventListener('scroll', handleWindowScroll);
-    return () => {
-      window.removeEventListener('scroll', handleWindowScroll);
+
+    const handleWindowScroll = () => {
+      const wineFilters = wineFiltersRef.current.getBoundingClientRect();
+      const asideHeight = asideRef.current.getBoundingClientRect();
+      const screenHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      if (asideHeight.height > screenHeight - 300) {
+        if (wineFilters.top <= (screenHeight * 0.55)) {
+          toggleFilters();
+        }
+      } else {
+        toggleFilters();
+      }
+
     }
-  },[showFilters]);
+    main.addEventListener('scroll', handleWindowScroll);
+    winesList?.addEventListener('scroll', handleWindowScroll);
+    return () => {
+      main.removeEventListener('scroll', handleWindowScroll);
+      winesList?.removeEventListener('scroll', handleWindowScroll);
+    }
+  },[showFilters, isMobile]);
 
   const filterIconRef = useRef(null);
 
@@ -98,15 +109,83 @@ export default function WinesPage() {
     }
   }
 
+  const [activeIndex, setActiveIndex] = useState(0);
+  const mobileCardWidth = 125;
+  const desktopCardWidth = 275;
+
+  const cardWidth = useMemo(() => {
+    if (isMobile) return mobileCardWidth;
+    return desktopCardWidth;
+  },[isMobile])
+
+  useEffect(() => {
+    if (!winesListRef.current) return;
+    
+    const marginX = (windowWidth - cardWidth) / 2;
+
+    const observerOptions = {
+      root: winesListRef.current,
+      rootMargin: `0px -${marginX}px -0px -${marginX}px`,
+      threshold: 0.1, 
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const index = parseInt(entry.target.getAttribute('data-index'), 10);
+          if (!isNaN(index)) {
+            setActiveIndex(index);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    const children = winesListRef.current.querySelectorAll('.wine-card-target');
+    children.forEach((child) => observer.observe(child));
+
+    return () => observer.disconnect();
+  }, [wines, isMobile, windowWidth, cardWidth]);
+
+  const pricePosition = useMemo(() => {
+    if (isMobile) return 'left-[65px] top-[25%]';
+    return 'left-[145px] top-[25%]';
+  }, [isMobile]);
+
+  const spacerWidth = useMemo(() => {
+    return (windowWidth / 2) - (cardWidth / 2);
+  }, [windowWidth, cardWidth]);
+
+  const winePaddingSize = {
+    display: 'flex',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    scrollSnapType: 'x mandatory',
+    scrollBehavior: 'smooth',
+    WebkitOverflowScrolling: 'touch',
+    alignItems: 'top',
+  }
+
+  const priceActive = {
+    opacity: '1',
+    transform: 'scale(1)',
+  };
+
+  const wineDetailsPosition = {
+    width: '100vw',
+    left: `calc(-50vw + ${cardWidth / 2}px)`,
+  }
+
   return (
-    <div className="flex flex-wrap gap-5">
+    <div className="flex flex-wrap gap-2 h-full">
       <div className="w-full">
-        <h1 className="text-5xl font-bold">Our Wines</h1>
+        <h1 className="text-5xl font-bold invisible h-0">Our Wines</h1>
       </div>
 
       <aside 
       ref={asideRef}
-      className="w-full shrink-0">
+      className="w-full shrink-0 px-4 sm:px-6 lg:px-8">
         <div className="flex gap-4 pb-4 items-baseline">
           <button 
             className="zero-style-button filter-button"
@@ -277,58 +356,76 @@ export default function WinesPage() {
         </div>
       </aside>
 
-      <div className="flex-1">
+      <div className="flex-1 w-full h-full">
         {loading ? (
           <div className="text-center py-12 text-offwhite">Loading wines...</div>
         ) : wines.length === 0 ? (
           <div className="text-center py-12 text-offwhite">No wines match your filters.</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-6">
-            {wines.map((wine) => (
-              <Link
-                key={wine._id}
-                to={`/wines/${wine._id}`}
-                className="overflow-hidden transition group relative"
-              >
-                <div
-                  className="flex items-center justify-center absolute left-[55%] top-[25%] min-w-10 min-h-10 rounded-full bg-blue-primary price">
-                    <span className="text-offwhite text-xs text-lg">${wine.price}</span>
-                </div>
-                {wine.imageUrl && (
-                  <img src={wine.imageUrl} alt={wine.name} className="w-full h-94 object-cover" />
-                )}
-                {!wine.imageUrl && (
-                  <img src='../../public/wine_bottle.webp' alt={wine.name} className="w-full h-94 object-contain" />
-                )}
-                <div className="flex items-center flex-wrap">
-                  <h3 className="text-2xl font-medium text-red-secondary uppercase group-hover:text-offwhite transition w-full text-center tracking-wider">
-                    {wine.name}
-                  </h3>
-                  <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>
-                  <div className="flex items-center gap-2 w-full items-center justify-center">
-                    <span className="text-xs font-light px-2 py-0.5">
-                      {wine.varietal?.name} / {wine.colour?.name} / {wine.region?.name}
-                    </span>
-                  </div>
-                  {user && 
-                    <div>
-                      {user.role === 'admin' &&
-                        <span className="">
-                          {wine.stock > 0 ? `${wine.stock}` : 'Out of stock'}
-                        </span>
-                      }
-                      {user.role !== 'admin' &&
-                        <span className="">
-                          {wine.stock > 0 ? null : 'Out of stock'}
-                        </span>
-                      }
+          <div 
+            className="max-h-[100dvh] h-[100%] scrollbar-thin"
+            ref={winesListRef}
+            style={winePaddingSize}>
+            <div style={{ flex: `0 0 ${spacerWidth}px`, flexShrink: 0 }}></div>
+            {wines.map((wine, index) => {
+              const isActive = index === activeIndex;
+
+              return (
+                <Link
+                  key={wine._id}
+                  to={`/wines/${wine._id}`}
+                  data-index={index}
+                  className="transition-all duration-300 ease-out group relative wine-card-target"
+                  style={{
+                    flex: `0 0 ${cardWidth}px`,
+                    scrollSnapAlign: 'center',
+                    display: 'inline-block',
+                    transform: isActive ? 'scale(1)' : 'scale(0.6)',
+                    zIndex: isActive ? '10' : '1',
+                  }}>
+                  <div className="relative">
+                    <div
+                      className={`flex items-center justify-center absolute w-12 h-12 rounded-full bg-blue-primary price ${pricePosition}`}
+                      style={isActive ? priceActive : null}>
+                        <span className="text-offwhite text-lg font-semibold">${wine.price}</span>
                     </div>
-                  }
-                  
-                  
-                </div>
-              </Link>
-            ))}
+                    {wine.imageUrl && (
+                      <img src={wine.imageUrl} alt={wine.name} className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
+                    )}
+                    {!wine.imageUrl && (
+                      <img src='/wine_bottle.webp' alt={wine.name} className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
+                    )}
+                    <div className={`flex items-center flex-wrap absolute ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                      style={wineDetailsPosition}>
+                      <h3 className="text-2xl font-medium text-offwhite uppercase transition w-full text-center tracking-wider">
+                        {wine.name}
+                      </h3>
+                      <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>
+                      <div className="flex items-center gap-2 w-full items-center justify-center">
+                        <span className="text-xs font-light px-2 py-0.5">
+                          {wine.varietal?.name} / {wine.colour?.name} / {wine.region?.name}
+                        </span>
+                      </div>
+                      {user && 
+                        <div>
+                          {user.role === 'admin' &&
+                            <span className="">
+                              {wine.stock > 0 ? `${wine.stock}` : 'Out of stock'}
+                            </span>
+                          }
+                          {user.role !== 'admin' &&
+                            <span className="">
+                              {wine.stock > 0 ? null : 'Out of stock'}
+                            </span>
+                          }
+                        </div>
+                      } 
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+            <div style={{ flex: `0 0 ${spacerWidth}px`, flexShrink: 0 }}></div>
           </div>
         )}
       </div>
