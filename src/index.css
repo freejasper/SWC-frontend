@@ -67,6 +67,9 @@
         appearance: none !important;
         -webkit-appearance: none !important;
     }
+    .outer-header-menu {
+        transition: grid-template-rows 0.3s ease-in-out;
+    }
     #outer-wine-filters {
         transition: grid-template-rows 0.1s ease-in-out;
     }

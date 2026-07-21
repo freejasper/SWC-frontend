@@ -17,7 +17,7 @@ export default function AdminWineForm() {
 
   const [form, setForm] = useState({
     name: '', producer: '', region: '', varietal: '', colour: '',
-    price: '', stock: '', imageUrl: '',
+    price: '', stock: '', imageUrl: '', description: '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -41,6 +41,7 @@ export default function AdminWineForm() {
           price: w.price,
           stock: w.stock,
           imageUrl: w.imageUrl || '',
+          description: w.description || '',
         })
       }).catch(() => toast.error('Failed to load wine'))
     }
@@ -127,6 +128,15 @@ export default function AdminWineForm() {
           <label className="block text-sm font-medium text-stone-700 mb-1">Image URL</label>
           <input type="url" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
             className="w-full border border-stone-300 rounded px-3 py-2" placeholder="https://..." />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-stone-700 mb-1">Description</label>
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full border border-stone-300 rounded px-3 py-2"
+            rows={4}
+          />
         </div>
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={loading}

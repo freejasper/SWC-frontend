@@ -111,22 +111,23 @@ export default function WinesPage() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const mobileCardWidth = 125;
-  const desktopCardWidth = 275;
+  const desktopCardWidth = 225;
 
   const cardWidth = useMemo(() => {
     if (isMobile) return mobileCardWidth;
     return desktopCardWidth;
-  },[isMobile])
+  },[isMobile]);
 
   useEffect(() => {
+    const container = winesListRef.current;
     if (!winesListRef.current) return;
     
     const marginX = (windowWidth - cardWidth) / 2;
 
     const observerOptions = {
-      root: winesListRef.current,
+      root: container,
       rootMargin: `0px -${marginX}px -0px -${marginX}px`,
-      threshold: 0.1, 
+      threshold: 0.5, 
     };
 
     const observerCallback = (entries) => {
@@ -157,10 +158,10 @@ export default function WinesPage() {
     return (windowWidth / 2) - (cardWidth / 2);
   }, [windowWidth, cardWidth]);
 
-  const winePaddingSize = {
+  const wineListStyles = {
     display: 'flex',
     overflowX: 'auto',
-    overflowY: 'hidden',
+    overflowY: 'visible',
     scrollSnapType: 'x mandatory',
     scrollBehavior: 'smooth',
     WebkitOverflowScrolling: 'touch',
@@ -178,7 +179,7 @@ export default function WinesPage() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 h-full">
+    <div className="flex flex-wrap gap-2 h-[100%]">
       <div className="w-full">
         <h1 className="text-5xl font-bold invisible h-0">Our Wines</h1>
       </div>
@@ -356,7 +357,7 @@ export default function WinesPage() {
         </div>
       </aside>
 
-      <div className="flex-1 w-full h-full">
+      <div className="flex-1 w-full h-[100%] items-center">
         {loading ? (
           <div className="text-center py-12 text-offwhite">Loading wines...</div>
         ) : wines.length === 0 ? (
@@ -365,7 +366,7 @@ export default function WinesPage() {
           <div 
             className="max-h-[100dvh] h-[100%] scrollbar-thin"
             ref={winesListRef}
-            style={winePaddingSize}>
+            style={wineListStyles}>
             <div style={{ flex: `0 0 ${spacerWidth}px`, flexShrink: 0 }}></div>
             {wines.map((wine, index) => {
               const isActive = index === activeIndex;
@@ -390,14 +391,21 @@ export default function WinesPage() {
                         <span className="text-offwhite text-lg font-semibold">${wine.price}</span>
                     </div>
                     {wine.imageUrl && (
-                      <img src={wine.imageUrl} alt={wine.name} className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
+                      <img 
+                        src={wine.imageUrl} 
+                        alt={wine.name} 
+                        className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
                     )}
                     {!wine.imageUrl && (
-                      <img src='/wine_bottle.webp' alt={wine.name} className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
+                      <img 
+                        src='/wine_bottle.webp' 
+                        alt={wine.name} 
+                        className={`w-full ${isMobile ? 'h-54' :'h-94'} 
+                        object-contain`} />
                     )}
-                    <div className={`flex items-center flex-wrap absolute ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                    <div className={`wine-details flex items-center flex-wrap absolute pt-2 ${isActive ? 'opacity-100' : 'opacity-0'}`}
                       style={wineDetailsPosition}>
-                      <h3 className="text-2xl font-medium text-offwhite uppercase transition w-full text-center tracking-wider">
+                      <h3 className="text-2xl font-medium text-offwhite uppercase transition w-full text-center tracking-wider leading-none">
                         {wine.name}
                       </h3>
                       <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>

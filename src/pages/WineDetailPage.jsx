@@ -4,18 +4,18 @@ import { useSelector, useDispatch } from 'react-redux'
 import { fetchWine } from '../store/winesSlice'
 import { addToCart } from '../store/cartSlice'
 import toast from 'react-hot-toast'
+import { useWindowWidth } from '../utilities/useWindowWidth'
 
 export default function WineDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch()
   const { current: wine, loading } = useSelector((state) => state.wines)
   const [quantity, setQuantity] = useState(1)
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchWine(id))
   }, [dispatch, id])
-
-  if (loading || !wine) return <div className="text-center py-12 text-stone-500">Loading...</div>
 
   const handleAddToCart = () => {
     if (wine.stock === 0) {
@@ -26,16 +26,34 @@ export default function WineDetailPage() {
     toast.success(`Added ${quantity} × ${wine.name} to cart`)
   }
 
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
+  
+
+  if (loading || !wine) return <div className="text-center py-12 text-stone-500">Loading...</div>
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <Link to="/wines" className="text-amber-600 hover:text-amber-500 mb-6 inline-block">&larr; Back to Wines</Link>
+    <div className="px-4 sm:px-6 lg:px-8 mx-auto h-[100%] overflowY-scroll">
+      <Link 
+        to="/wines" 
+        className="text-offblack mb-6 inline-block font-semibold underline basis-1/12">
+          Back
+      </Link>
 
-      <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
-        {wine.imageUrl && (
-          <img src={wine.imageUrl} alt={wine.name} className="w-full h-80 object-cover" />
-        )}
+      <div className={`flex overflow-hidden basis-11/12 ${ isMobile ? 'flex-col' : 'flex-row'}`}>
+        <div className="basis-1/3">
+          {wine.imageUrl && (
+            <img src={wine.imageUrl} alt={wine.name} className="w-full h-80 object-cover" />
+          )}
+          {!wine.imageUrl && (
+            <img 
+              src='/wine_bottle.webp' 
+              alt={wine.name} 
+              className='w-full h-94 object-contain' />
+          )}
+        </div>
 
-        <div className="p-8">
+        <div className="p-8 basis-2/3">
           <h1 className="text-3xl font-bold text-stone-900 mb-2">{wine.name}</h1>
 
           <Link to={`/producers/${wine.producer?._id}`} className="text-amber-600 hover:text-amber-500 font-medium">
@@ -51,9 +69,20 @@ export default function WineDetailPage() {
           <div className="flex items-center justify-between mt-6 p-4 bg-stone-50 rounded-lg">
             <div>
               <span className="text-3xl font-bold text-amber-600">${wine.price}</span>
-              <p className={`text-sm mt-1 ${wine.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {wine.stock > 0 ? `${wine.stock} bottles available` : 'Currently out of stock'}
-              </p>
+              {user &&
+                <div>
+                  {user.role === 'admin' &&
+                    <p className={`text-sm mt-1 ${wine.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                      {wine.stock > 0 ? `${wine.stock} bottles available` : 'Currently out of stock'}
+                    </p>
+                  }
+                  {user.role !== 'admin' &&
+                    <p className={`text-sm mt-1 ${wine.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                      {wine.stock > 0 ? null : 'Currently out of stock'}
+                    </p>
+                  }
+                </div>
+              }
             </div>
 
             {wine.stock > 0 && (
@@ -81,7 +110,14 @@ export default function WineDetailPage() {
                 </button>
               </div>
             )}
-          </div>
+              </div>
+
+          {wine.description && (
+            <div className="mt-6">
+              <h3 className="font-semibold text-stone-900 mb-2">Description</h3>
+              <p className="text-stone-600 whitespace-pre-line">{wine.description}</p>
+            </div>
+          )}
 
           {wine.producer?.description && (
             <div className="mt-6">
