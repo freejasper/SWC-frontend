@@ -28,7 +28,7 @@ export default function WineDetailPage() {
 
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
-  
+
 
   if (loading || !wine) return <div className="text-center py-12 text-stone-500">Loading...</div>
 
@@ -54,16 +54,21 @@ export default function WineDetailPage() {
         </div>
 
         <div className="p-8 basis-2/3">
-          <h1 className="text-3xl font-bold text-stone-900 mb-2">{wine.name}</h1>
+          <h1 className="text-3xl font-bold text-offwhite mb-2 uppercase tracking-wider">{wine.name}</h1>
 
           <Link to={`/producers/${wine.producer?._id}`} className="text-amber-600 hover:text-amber-500 font-medium">
             {wine.producer?.name}
           </Link>
 
           <div className="flex flex-wrap gap-2 mt-4">
-            <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">{wine.varietal?.name}</span>
-            <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">{wine.colour?.name}</span>
-            <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">{wine.region?.name}</span>
+            {Array.isArray(wine.varietal) && wine.varietal.map((variety, idx) => (
+              <span key={idx} className="text-sm bg-stone-100 px-3 py-1 rounded-full">{variety.name}{idx < wine.varietal.length - 1 ? '-' : ''}</span>
+            ))}
+            {!Array.isArray(wine.varietal) && 
+              <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">{wine.varietal?.name}</span>
+            }
+            <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">&nbsp;/&nbsp;{wine.colour?.name}</span>
+            <span className="text-sm bg-stone-100 px-3 py-1 rounded-full">&nbsp;/&nbsp;{wine.region?.name}</span>
           </div>
 
           <div className="flex items-center justify-between mt-6 p-4 bg-stone-50 rounded-lg">

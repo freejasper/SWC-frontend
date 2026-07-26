@@ -178,6 +178,10 @@ export default function WinesPage() {
     left: `calc(-50vw + ${cardWidth / 2}px)`,
   }
 
+  useEffect(() => {
+    wines ? console.log(wines) : null;
+  }, [wines])
+
   return (
     <div className="flex flex-wrap gap-2 h-[100%]">
       <div className="w-full">
@@ -409,11 +413,19 @@ export default function WinesPage() {
                         {wine.name}
                       </h3>
                       <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>
-                      <div className="flex items-center gap-2 w-full items-center justify-center">
-                        <span className="text-xs font-light px-2 py-0.5">
-                          {wine.varietal?.name} / {wine.colour?.name} / {wine.region?.name}
-                        </span>
-                      </div>
+                       <div className="flex items-center w-full items-center justify-center">
+                         {Array.isArray(wine.varietal) && wine.varietal.map((variety, idx) => (
+                           <span key={idx} className="text-xs font-light py-0.5">
+                             {variety.name}{idx < wine.varietal.length - 1 ? '-' : ''}
+                           </span>
+                         ))}
+                         <span className="text-xs font-light py-0.5">
+                           &nbsp;/ {wine.colour?.name} / 
+                         </span>
+                         <span className="text-xs font-light py-0.5">
+                           &nbsp;{wine.region?.name}
+                         </span>
+                       </div>
                       {user && 
                         <div>
                           {user.role === 'admin' &&

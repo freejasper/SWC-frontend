@@ -16,7 +16,7 @@ export default function AdminWineForm() {
   const { regions, varietals, colours } = useSelector((state) => state.tags)
 
   const [form, setForm] = useState({
-    name: '', producer: '', region: '', varietal: '', colour: '',
+    name: '', producer: '', region: '', varietal: [''], colour: '',
     price: '', stock: '', imageUrl: '', description: '',
   })
   const [loading, setLoading] = useState(false)
@@ -29,22 +29,22 @@ export default function AdminWineForm() {
   }, [dispatch])
 
   useEffect(() => {
-    if (isEdit) {
-      getWine(id).then((res) => {
-        const w = res.data
-        setForm({
-          name: w.name,
-          producer: w.producer?._id || '',
-          region: w.region?._id || '',
-          varietal: w.varietal?._id || '',
-          colour: w.colour?._id || '',
-          price: w.price,
-          stock: w.stock,
-          imageUrl: w.imageUrl || '',
-          description: w.description || '',
-        })
-      }).catch(() => toast.error('Failed to load wine'))
-    }
+       if (isEdit) {
+         getWine(id).then((res) => {
+           const w = res.data
+           setForm({
+             name: w.name,
+             producer: w.producer?._id || '',
+             region: w.region?._id || '',
+             varietal: w.varietal ? (Array.isArray(w.varietal) ? w.varietal.map(v => v._id || v) : [w.varietal._id || w.varietal]) : [],
+             colour: w.colour?._id || '',
+             price: w.price,
+             stock: w.stock,
+             imageUrl: w.imageUrl || '',
+             description: w.description || '',
+           })
+         }).catch(() => toast.error('Failed to load wine'))
+       }
   }, [id, isEdit])
 
   const handleSubmit = async (e) => {
@@ -65,6 +65,21 @@ export default function AdminWineForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleVarietalChange = (e, index) => {
+    const varietals = [...form.varietal];
+    varietals[index] = e.target.value;
+    setForm((prev) => {
+      return {...prev, varietal: varietals};
+    })
+  }
+
+  const handleAddVarietal = () => {
+    const newVarietalEmpty = [...form.varietal, ''];
+    setForm((prev) => {
+      return {...prev, varietal: newVarietalEmpty};
+    });
   }
 
   return (
@@ -95,11 +110,16 @@ export default function AdminWineForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Varietal</label>
-            <select required value={form.varietal} onChange={(e) => setForm({ ...form, varietal: e.target.value })}
-              className="w-full border border-stone-300 rounded px-3 py-2">
-              <option value="">Select</option>
-              {varietals.map((v) => <option key={v._id} value={v._id}>{v.name}</option>)}
-            </select>
+            {form.varietal.map((i, index) => (
+              <select required key={index} value={form.varietal[index]} onChange={(e) => handleVarietalChange(e, index)}
+                className="w-full border border-stone-300 rounded px-3 py-2">
+                <option value="">Select</option>
+                {varietals.map((v) => <option key={v._id} value={v._id}>{v.name}</option>)}
+              </select>
+            ))}
+            {form.varietal.length > 0 && form.varietal[form.varietal.length - 1] !== '' &&
+              <button onClick={handleAddVarietal}>Add varietal</button>
+            }
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Colour</label>

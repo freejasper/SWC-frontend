@@ -4,6 +4,9 @@ import { logout } from '../store/authSlice'
 import { useLayoutEffect, useEffect } from 'react';
 import { useWindowWidth } from '../utilities/useWindowWidth';
 
+import PrimaryLogo from '../assets/PrimaryLogo';
+import IconLogo from '../assets/IconLogo';
+
 export default function Layout() {
   const { user } = useSelector((state) => state.auth)
   const { items } = useSelector((state) => state.cart)
@@ -19,28 +22,34 @@ export default function Layout() {
 
   const windowWidth = useWindowWidth();
 
+  const location = useLocation();
+
   useLayoutEffect(() => {
+    const main = document.querySelector('main');
     const footerH = document.querySelector('footer').offsetHeight;
     const copyrightH = document.querySelector('.copyright').getBoundingClientRect().height;
+    const headerH = document.querySelector('header').offsetHeight;
 
-    document.querySelector('main').style.marginBottom = `${footerH - copyrightH}px`;
-  }, [windowWidth]);
+    main.style.marginBottom = `${footerH - copyrightH}px`;
+    main.style.marginTop = `${headerH}px`;
+  }, [windowWidth, location]);
+
+  //UPDATE THIS TO PROPERLY TRACK CHANGES IN HEIGHT OF HEADER USING REFS
 
   const isMobile = windowWidth < 768;
-
-  const location = useLocation();
 
   useEffect(() => {
     console.log('pathname:', location.pathname.split('/'));
   }, [location])
 
+  const home = !location.pathname.split('/')[1];
   const winesHeader = location.pathname.split('/')[1] === 'wines';
   const producersHeader = location.pathname.split('/')[1] === 'producers';
   const contactHeader = location.pathname.split('/')[1] === 'contact';
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden">
-      <header>
+    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden justify-center items-center">
+      <header className="fixed top-0 left-0">
         <nav className="bg-red-primary flex justify-center text-offwhite">
           <div className="flex items-center justify-between w-full">
             <div className={`w-full flex flex-wrap ${isMobile ? 'text-2xl' : 'text-3xl'} uppercase tracking-wider leading-none`}>
@@ -76,13 +85,18 @@ export default function Layout() {
         </nav>
       </header>
 
-      <div className="px-4 rounded-full bg-red-secondary text-offwhite">
+      <div className="text-offwhite fixed top-0 flex justify-center">
         <Link to="/" className="hover:text-red-primary transition relative">
-          SWC
+          {home && 
+            <PrimaryLogo width={windowWidth} />
+          }
+          {!home && 
+            <IconLogo width={windowWidth / 3.3} />
+          }
         </Link>
       </div>
 
-      <main className="flex-1 mx-auto pt-22 w-full overflow-auto">
+      <main className="flex-1 mx-auto w-full overflow-auto">
         <Outlet />
       </main>
 
