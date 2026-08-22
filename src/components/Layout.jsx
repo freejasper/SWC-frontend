@@ -1,10 +1,9 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout } from '../store/authSlice'
-import { useLayoutEffect, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useWindowWidth } from '../utilities/useWindowWidth';
 
-import PrimaryLogo from '../assets/PrimaryLogo';
 import IconLogo from '../assets/IconLogo';
 
 export default function Layout() {
@@ -24,17 +23,6 @@ export default function Layout() {
 
   const location = useLocation();
 
-  useLayoutEffect(() => {
-    const main = document.querySelector('main');
-    const footerH = document.querySelector('footer').offsetHeight;
-    const copyrightH = document.querySelector('.copyright').getBoundingClientRect().height;
-    const headerH = document.querySelector('header').offsetHeight;
-
-    main.style.marginBottom = `${footerH - copyrightH}px`;
-    main.style.marginTop = `${headerH}px`;
-  }, [windowWidth, location]);
-
-  //UPDATE THIS TO PROPERLY TRACK CHANGES IN HEIGHT OF HEADER USING REFS
 
   const isMobile = windowWidth < 768;
 
@@ -43,128 +31,127 @@ export default function Layout() {
   }, [location])
 
   const home = !location.pathname.split('/')[1];
-  const winesHeader = location.pathname.split('/')[1] === 'wines';
-  const producersHeader = location.pathname.split('/')[1] === 'producers';
-  const contactHeader = location.pathname.split('/')[1] === 'contact';
+
+  const [navActive, setNavActive] = useState(false);
+
+  const toggleNav = () => {
+    setNavActive(!navActive);
+  }
 
   return (
     <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden justify-center items-center">
-      <header className="fixed top-0 left-0">
-        <nav className="bg-red-primary flex justify-center text-offwhite">
-          <div className="flex items-center justify-between w-full">
-            <div className={`w-full flex flex-wrap ${isMobile ? 'text-2xl' : 'text-3xl'} uppercase tracking-wider leading-none`}>
-              
-              <div
-                className={`outer-header-menu w-full grid ${winesHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                  <Link 
-                    to="/wines" 
-                    className={`transition w-full text-left overflow-hidden ${winesHeader ? 'p-3' : 'p-0'}`} >
-                      Wines
-                  </Link>
-              </div>
-              
-              <div 
-                className={`outer-header-menu w-full grid ${producersHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                <Link 
-                  to="/producers" 
-                  className={`transition w-full text-left overflow-hidden ${producersHeader ? 'p-3' : 'p-0'}`} >
-                    Producers
-                </Link>
-              </div>
-              
-              <div
-                className={`outer-header-menu w-full grid ${contactHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                <Link 
-                  to="/contact" 
-                  className={`transition w-full text-left overflow-hidden ${contactHeader ? 'p-3' : 'p-0'}`} >
-                    Contact
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </header>
 
-      <div className="text-offwhite fixed top-0 flex justify-center">
-        <Link to="/" className="hover:text-red-primary transition relative">
-          {home && 
-            <PrimaryLogo width={windowWidth} />
-          }
-          {!home && 
-            <IconLogo width={windowWidth / 3.3} />
-          }
-        </Link>
-      </div>
+      {!home &&
+        <header
+          // ref={logoRef}
+          className={`
+            z-10
+            text-offwhite
+            pb-6 
+            ${isMobile ? 'pt-2 self-start px-4 sm:px-6 lg:px-8' : 'pt-0'} 
+            flex`}>
+          <Link to="/" className="hover:text-red-primary transition relative">
+              <>
+                {isMobile ? <IconLogo width={windowWidth * 0.4} /> : <IconLogo width={windowWidth / 5} />}
+              </>
+          </Link>
+        </header>
+      }
 
       <main className="flex-1 mx-auto w-full overflow-auto">
         <Outlet />
       </main>
 
-      <div className="fixed top-12 right-2 p-4 rounded-full bg-red-secondary text-offwhite">
-        <Link to="/cart" className="hover:text-red-primary transition relative">
-          Cart
-          {cartCount > 0 && (
-            <span className="absolute bg-amber-500 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {cartCount}
-            </span>
-          )}
-        </Link>
-      </div>
-
-      <div className="fixed top-2 right-12 p-4 rounded-full bg-red-secondary text-offwhite">
-        {user ? (
-          <div className="flex items-center gap-3">
-            {user.role === 'admin' && (
-              <Link to="/admin" className="text-amber-300 hover:text-amber-200 text-sm">Admin</Link>
+      <nav className="z-1 fixed top-2 right-2 flex flex-wrap items-end justify-end gap-1">
+        <div className="w-12 h-12 flex items-center justify-center grow-0 rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
+          <Link to="/cart" className="relative">
+            Cart
+            {cartCount > 0 && (
+              <span className="absolute text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                {cartCount}
+              </span>
             )}
-            <Link to="/orders" className="hover:text-red-primary transition text-sm">Orders</Link>
-            <span className="text-stone-400 text-sm">{user.name}</span>
-            <button onClick={handleLogout} className="text-stone-400 hover:text-white text-sm">Logout</button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="hover:text-red-primary transition">Login</Link>
-          </div>
-        )}
-      </div>
-
-      <footer className="text-center m-0 p-0">
-        <div className="text-tiny text-left p-1 text-offwhite copyright">
-          &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
+          </Link>
         </div>
-        <nav className="bg-offwhite flex justify-center text-red-primary">
-          <div className="flex items-center justify-between w-full">
-            <div className={`w-full flex flex-wrap ${isMobile ? 'text-2xl' : 'text-3xl'} uppercase tracking-wider leading-none`}>
-              
-              <div
-                className={`outer-header-menu w-full grid ${!winesHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                  <Link 
-                    to="/wines" 
-                    className={`hover:text-offwhite hover:bg-red-primary transition w-full text-left overflow-hidden ${!winesHeader ? 'p-3' : 'p-0'}`} >
-                      Wines
-                  </Link>
-              </div>
-              
-              <div 
-                className={`outer-header-menu w-full grid ${!producersHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                <Link 
-                  to="/producers" 
-                  className={`hover:text-offwhite hover:bg-red-primary transition w-full text-left overflow-hidden ${!producersHeader ? 'p-3' : 'p-0'}`} >
-                    Producers
-                </Link>
-              </div>
-              
-              <div
-                className={`outer-header-menu w-full grid ${!contactHeader ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} >
-                <Link 
-                  to="/contact" 
-                  className={`hover:text-offwhite hover:bg-red-primary transition w-full text-left overflow-hidden ${!contactHeader ? 'p-3' : 'p-0'}`} >
-                    Contact
-                </Link>
-              </div>
+        <button
+          onClick={toggleNav}
+          className={`zero-style-button
+                      w-12 h-12  
+                      rounded-full
+                      noshrink 
+                      bg-offwhite
+                      ${navActive ? 'bg-red-secondary' : 'bg-offwhite'} 
+                      ${navActive ? 'text-offwhite' : 'text-red-primary'} 
+                      hover:text-offwhite hover:bg-red-secondary 
+                      transition
+                      text-center`}>
+            +
+        </button>
+        
+        <div
+          className={`basis-full flex flex-col justify-end gap-1 
+                    overflow-hidden
+                    ${navActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+                    transition`}>
+          <div className="flex gap-1 justify-end">
+            <div className="rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
+              <Link 
+                to="/wines" 
+                onClick={toggleNav}
+                className="w-full text-left px-3 py-2 w-[100%] h-[100%]">
+                  Wines
+              </Link>
+            </div>
+            <div className="rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
+              <Link 
+                to="/producers" 
+                onClick={toggleNav}
+                className="w-full text-left px-3 py-2 w-[100%] h-[100%]">
+                  Producers
+              </Link>
             </div>
           </div>
-        </nav>
+          <div className="flex gap-1 justify-end">
+            <div className="rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
+              <Link 
+                to="/contact"
+                onClick={toggleNav} 
+                className="w-full text-left px-3 py-2 w-[100%] h-[100%]">
+                  Contact
+              </Link>
+            </div>
+            <div className="rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
+              {user ? (
+                <div className="flex items-center gap-1">
+                  {user.role === 'admin' && (
+                    <Link 
+                      to="/admin"
+                      onClick={toggleNav} 
+                      className="text-amber-300 hover:text-amber-200 text-sm px-3 py-2 w-[100%] h-[100%]">Admin</Link>
+                  )}
+                  <Link to="/orders" className="hover:text-offwhite hover:bg-red-secondary transition text-sm px-3 py-2 w-[100%] h-[100%]">Orders</Link>
+                  <span className="text-stone-400 text-sm">{user.name}</span>
+                  <button onClick={() => { handleLogout(); toggleNav;}} className="text-stone-400 hover:text-white text-sm px-3 py-2 w-[100%] h-[100%]">Logout</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <Link 
+                    to="/login"
+                    onClick={toggleNav} 
+                    className="px-3 py-2 w-[100%] h-[100%]">
+                      Login</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+
+      <footer className="text-center m-0 p-0">
+        <div className="text-tiny p-1 font-semibold text-offblack">
+          &copy; {new Date().getFullYear()} SWC Wines. All rights reserved.
+        </div>
       </footer>
     </div>
   )

@@ -1,8 +1,6 @@
-@import "tailwindcss";
-
 @font-face {
     font-family: 'BRSonoma';
-    src: url('/BRSonoma-Bold.woff2') format('woff2');
+    src: url('/BRSonoma-SemiBold.woff2') format('woff2');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -18,11 +16,13 @@
 
 @font-face {
     font-family: 'BRSonoma';
-    src: url('/BRSonoma-SemiBold.woff2') format('woff2');
-    font-weight: 500;
+    src: url('/BRSonoma-Bold.woff2') format('woff2');
+    font-weight: 700;
     font-style: normal;
     font-display: swap;
 }
+
+@import "tailwindcss";
 
 @theme {
   --text-tiny: 0.55rem;
@@ -31,26 +31,36 @@
   --color-offwhite: #FCE8E8;
   --color-offblack: #1A1B1B;
   --color-blue-primary: #0831ED;
+  --font-sonoma: "BRSonoma", sans-serif;
   
 }
 
-@layer utilities {
+@layer base {
+    select {
+        border: none;
+        padding: 0 !important;
+        margin: 0 !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
     html, body {
         background-color: var(--color-red-primary);
     }
     h1, h2, h3 {
-        color: var(--color-red-secondary);
-        font-family: 'BRSonoma', sans-serif;
-        font-weight: 500;
+        color: var(--color-offblack);
+        font-family: var(--font-sonoma);
+        font-weight: 600;
+    }
+    a {
+        display: inline-block;
     }
     p {
         color: var(--color-offblack);
-        font-family: 'BRSonoma', sans-serif;
-        font-weight: 300;
+        font-family: var(--font-sonoma);
     }
     nav a {
-        font-family: 'BRSonoma', sans-serif;
-        font-weight: 500;
+        font-family: var(--font-sonoma);
+        font-weight: 600;
     }
     footer {
         position: fixed;
@@ -88,14 +98,12 @@
         border-radius: 5px;
     }
     .zero-style-button {
-        background: none;
         border: none;
         padding: 0;
         margin: 0;
         cursor: pointer;
         line-height: 1;
         font-size: inherit;
-        height: fit-content;
     }
     .filter-button {
         display: flex;
@@ -130,15 +138,5 @@
     }
     .wine-thumbnail {
         scroll-snap-align: center;
-    }
-}
-
-@layer base {
-    select {
-        border: none;
-        padding: 0 !important;
-        margin: 0 !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
     }
 }

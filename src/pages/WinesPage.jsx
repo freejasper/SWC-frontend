@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useLayoutEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchWines } from '../store/winesSlice'
@@ -61,38 +61,26 @@ export default function WinesPage() {
   const winesListRef = useRef(null);
 
   useEffect(() => {
-    const winesList = winesListRef.current ? winesListRef.current : null;
-    const main = document.querySelector('main');
+    const handleWheel = (e) => {
+      e.preventDefault();
 
-    const toggleFilters = () => {
-      if (showFilters === 'grid-open') setShowFilters('grid-closed');
-      if (filterIconRef.current) {
-        filterIconRef.current.classList.remove('filter-icon-open');
-      }
-    }
-
-    const handleWindowScroll = () => {
-      const wineFilters = wineFiltersRef.current.getBoundingClientRect();
-      const asideHeight = asideRef.current.getBoundingClientRect();
-      const screenHeight = window.innerHeight || document.documentElement.clientHeight;
-
-      if (asideHeight.height > screenHeight - 300) {
-        if (wineFilters.top <= (screenHeight * 0.55)) {
-          toggleFilters();
-        }
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        const scrollVal = e.deltaY > 20 ? 20 : e.deltaY < -20 ? -20 : e.deltaY;
+        winesListRef.current.scrollLeft += scrollVal;
       } else {
-        toggleFilters();
+        const scrollVal = e.deltaX > 20 ? 20 : e.deltaX < -20 ? -20 : e.deltaX;
+        winesListRef.current.scrollLeft += scrollVal;
       }
+    };
 
-    }
-    main.addEventListener('scroll', handleWindowScroll);
-    winesList?.addEventListener('scroll', handleWindowScroll);
+    if (!isMobile) window.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
-      main.removeEventListener('scroll', handleWindowScroll);
-      winesList?.removeEventListener('scroll', handleWindowScroll);
+      if (!isMobile) window.removeEventListener('wheel', handleWheel, { passive: false });
     }
   },[showFilters, isMobile]);
 
+
+  // FILTER OPEN/CLOSE ANIMATION
   const filterIconRef = useRef(null);
 
   const handleFilterClick = () => {
@@ -109,14 +97,18 @@ export default function WinesPage() {
     }
   }
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const mobileCardWidth = 125;
+  // WINE CARDS WIDTHS
+  const mobileCardWidth = windowWidth * 0.4;
   const desktopCardWidth = 225;
 
   const cardWidth = useMemo(() => {
     if (isMobile) return mobileCardWidth;
     return desktopCardWidth;
-  },[isMobile]);
+  },[isMobile, mobileCardWidth, desktopCardWidth]);
+
+
+  // SETTING ACTIVE CARD
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const container = winesListRef.current;
@@ -149,28 +141,106 @@ export default function WinesPage() {
     return () => observer.disconnect();
   }, [wines, isMobile, windowWidth, cardWidth]);
 
-  const pricePosition = useMemo(() => {
-    if (isMobile) return 'left-[65px] top-[25%]';
-    return 'left-[145px] top-[25%]';
-  }, [isMobile]);
-
   const spacerWidth = useMemo(() => {
     return (windowWidth / 2) - (cardWidth / 2);
   }, [windowWidth, cardWidth]);
 
-  const wineListStyles = {
+  // SET WINES LIST CONTAINER TO REMAINING VERTICAL SPACE
+  const titleRef = useRef(null);
+  const winesContListRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const header = document.querySelector('header');
+    const title = titleRef.current;
+    const winesContList = winesContListRef.current;
+
+    if (!header || !title || !winesContList) return;
+
+    const handleResize = () => {
+      const headerH = header.getBoundingClientRect().height;
+      const titleH = title.getBoundingClientRect().height;
+
+      const remainingHeight = window.innerHeight - (headerH + titleH);
+
+      winesContList.style.height = `${remainingHeight}px`;
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // SETTING SIZE OF WINE CARDS
+  useLayoutEffect(() => {
+    const paddingSize = 60;
+
+    const resizeChildren = () => {
+      const winesSection = winesListRef.current;
+      if (!winesSection) return;
+
+      const winesSectionH = winesSection.getBoundingClientRect().height;
+
+      const children = Array.from(winesSection.querySelectorAll('.wine-card-target'));
+      if (children.length === 0) return;
+
+      let maxDetailsHeight = 0;
+      children.forEach((child) => {
+        const details = child.querySelector('.wine-details');
+        if (!details) return;
+
+        const detailsHeight = details.getBoundingClientRect().height;
+        if (detailsHeight > maxDetailsHeight) {
+          maxDetailsHeight = detailsHeight;
+        }
+      });
+
+      children.forEach((child) => {
+        const image = child.querySelector('img');
+        const details = child.querySelector('.wine-details');
+
+        if (!image || !details) return;
+
+        if (!isMobile) image.style.height = `${winesSectionH - maxDetailsHeight - paddingSize}px`;
+        if (isMobile) image.style.height = `${winesSectionH - maxDetailsHeight - (paddingSize * 2)}px`;
+        child.style.transform = `translateY(-${(maxDetailsHeight / 2 + 5)}px)`;
+      });
+    }
+
+    window.addEventListener('resize', resizeChildren);
+    resizeChildren();
+
+    return () => {
+      window.removeEventListener('resize', resizeChildren);
+    };
+  }, [wines, isMobile]);
+
+  // STYLE OBJECTS
+  const wineDesktopListStyles = {
     display: 'flex',
     overflowX: 'auto',
-    overflowY: 'visible',
+    overflowY: 'hidden',
+    WebkitOverflowScrolling: 'touch',
+    alignItems: 'center',
+  }
+
+  const wineMobileListStyles = {
+    display: 'flex',
+    overflowX: 'auto',
+    overflowY: 'hidden',
     scrollSnapType: 'x mandatory',
     scrollBehavior: 'smooth',
     WebkitOverflowScrolling: 'touch',
-    alignItems: 'top',
+    alignItems: 'center',
   }
 
   const priceActive = {
     opacity: '1',
-    transform: 'scale(1)',
+    transform: 'scale(1.3)',
+    left: isMobile ? `${mobileCardWidth / 2 + 10}px` : `${desktopCardWidth / 2 + 10}px`,
+    top: '25%'
   };
 
   const wineDetailsPosition = {
@@ -178,22 +248,22 @@ export default function WinesPage() {
     left: `calc(-50vw + ${cardWidth / 2}px)`,
   }
 
-  useEffect(() => {
-    wines ? console.log(wines) : null;
-  }, [wines])
+  const filterButtonStyles = 'rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition inline-block px-3 py-2 text-left font-semibold';
 
   return (
-    <div className="flex flex-wrap gap-2 h-[100%]">
-      <div className="w-full">
-        <h1 className="text-5xl font-bold invisible h-0">Our Wines</h1>
+    <div className="h-[100%] content-start">
+      <div 
+        ref={titleRef}
+        className="w-full">
+        <h1 className="px-4 sm:px-6 lg:px-8 text-4xl font-bold uppercase">Our Wines</h1>
       </div>
 
       <aside 
       ref={asideRef}
-      className="w-full shrink-0 px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-4 pb-4 items-baseline">
-          <button 
-            className="zero-style-button filter-button"
+      className="w-full fixed shrink-0 px-4 sm:px-6 lg:px-8 z-20 pt-3">
+        <div className="flex flex-wrap gap-4 pb-4 items-baseline">
+          <button
+            className="zero-style-button filter-button hover:text-red-secondary transition"
             onClick={handleFilterClick} >
               <div className="button-text">Filters</div>
               <div ref={filterIconRef} className="filter-icon">+</div>
@@ -222,7 +292,7 @@ export default function WinesPage() {
             </div>
             <button
                 onClick={clearFilters}
-                className="zero-style-button"
+                className="zero-style-button button-text"
                 >
             Clear Filters</button>
           </>
@@ -230,7 +300,7 @@ export default function WinesPage() {
         </div>
         <div
           id="outer-wine-filters"
-          className={`grid ${showFilters} box-border`}>
+          className={`grid ${showFilters} box-border ${isMobile ? '' : 'max-w-1/3'}`}>
           <div
             id="inner-wine-filters" 
             className="overflow-hidden">
@@ -238,27 +308,26 @@ export default function WinesPage() {
               className="flex gap-2 flex-wrap">
 
                 <form 
-                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
+                  className="text-sm m-0 min-w-26 flex flex-col gap-1" >
                     <div
-                      className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                      className="w-full text-offblack uppercase font-semibold text-xs">
                       Producers
                     </div>
                     <div
-                      className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                      className='flex flex-wrap gap-1'>
                       {producers.map((p) => (
                         <label 
                           key={p._id}
-                          className="flex items-center gap-1 grow cursor-pointer">
+                          className={`cursor-pointer ${filterButtonStyles}`}>
                             <input
                                 type="checkbox"
                                 name="producer" 
                                 value={p._id}
                                 checked={filters.producer === p._id}
                                 onChange={(e) => updateFilter('producer', e.target.checked ? e.target.value : '')}
-                                className={filters.producer === p._id ? 'opacity-100' : 'opacity-0'}
+                                className={`${filters.producer === p._id ? 'opacity-100' : 'opacity-0'} w-0`}
                                 />
-                            <span
-                              className="">
+                            <span>
                               {p.name}
                             </span>
                         </label>
@@ -269,25 +338,24 @@ export default function WinesPage() {
                 <form 
                   className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
                     <div
-                      className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                      className="w-full text-offblack uppercase font-semibold text-xs">
                       Regions
                     </div>
                     <div
-                      className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                      className='flex flex-wrap gap-1'>
                       {regions.map((r) => (
                           <label
                               key={r._id}
-                              className="flex items-center gap-1 grow cursor-pointer">
+                              className={`cursor-pointer ${filterButtonStyles}`}>
                               <input 
                                   type="checkbox" 
                                   value={r._id}
                                   name="region"
                                   checked={filters.region === r._id}
                                   onChange={(e) => updateFilter('region', e.target.checked ? e.target.value : '')}
-                                  className={filters.region === r._id ? 'opacity-100' : 'opacity-0'}
+                                  className={`${filters.region === r._id ? 'opacity-100' : 'opacity-0'} w-0`}
                                   />
-                              <span
-                                className="">
+                              <span>
                                 {r.name}
                               </span>
                           </label>
@@ -296,27 +364,26 @@ export default function WinesPage() {
                 </form>
 
                 <form 
-                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
+                  className="text-sm m-0 min-w-26 flex flex-col gap-1 pb-1" >
                   <div
-                    className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                    className="text-offblack uppercase font-semibold text-xs">
                     Varietals
                   </div>
                   <div
-                    className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                    className='flex flex-wrap gap-1'>
                     {varietals.map((v) => (
                         <label 
                             key={v._id}
-                            className="flex items-center gap-1 grow cursor-pointer">
+                            className={`cursor-pointer ${filterButtonStyles}`}>
                             <input 
                                 type="checkbox"
                                 name="varietal"
                                 value={v._id}
                                 checked={filters.varietal === v._id}
                                 onChange={(e) => updateFilter('varietal', e.target.checked ? e.target.value : '')}
-                                className={filters.varietal === v._id ? 'opacity-100' : 'opacity-0'}
+                                className={`${filters.varietal === v._id ? 'opacity-100' : 'opacity-0'} w-0`}
                                 />
-                            <span
-                              className="">
+                            <span>
                               {v.name}
                             </span>
                         </label>
@@ -325,27 +392,26 @@ export default function WinesPage() {
                 </form>
 
                 <form 
-                  className="w-full text-sm m-0 min-w-26 flex flex-col gap-1 pb-1">
+                  className="text-sm m-0 min-w-26 flex flex-col gap-1 pb-1">
                   <div
-                    className="w-full pb-1 border-b border-offwhite text-offwhite uppercase font-semibold tracking-wider text-xs">
+                    className="text-offblack uppercase font-semibold text-xs">
                     Colours
                   </div>
                   <div
-                    className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
+                    className='flex flex-wrap gap-1'>
                     {colours.map((c) => (
                         <label 
                           key={c._id}
-                          className="flex items-center gap-1 grow cursor-pointer">
+                          className={`cursor-pointer ${filterButtonStyles}`}>
                             <input
                                 type="checkbox"
                                 name="colour"
                                 value={c._id}
                                 checked={filters.colour === c._id}
                                 onChange={(e) => updateFilter('colour', e.target.checked ? e.target.value : '')}
-                                className={filters.colour === c._id ? 'opacity-100' : 'opacity-0'}
+                                className={`${filters.colour === c._id ? 'opacity-100' : 'opacity-0'} w-0`}
                                 /> 
-                            <span
-                              className="">
+                            <span>
                               {c.name}
                             </span>
                         </label>
@@ -361,16 +427,18 @@ export default function WinesPage() {
         </div>
       </aside>
 
-      <div className="flex-1 w-full h-[100%] items-center">
+      <div 
+        ref={winesContListRef}
+        className="flex-1 w-full items-center overflow-y-hidden">
         {loading ? (
           <div className="text-center py-12 text-offwhite">Loading wines...</div>
         ) : wines.length === 0 ? (
           <div className="text-center py-12 text-offwhite">No wines match your filters.</div>
         ) : (
           <div 
-            className="max-h-[100dvh] h-[100%] scrollbar-thin"
+            className="max-h-[100dvh] h-[100%] scrollbar-thin transition-opacity duration-800"
             ref={winesListRef}
-            style={wineListStyles}>
+            style={isMobile ? wineMobileListStyles : wineDesktopListStyles}>
             <div style={{ flex: `0 0 ${spacerWidth}px`, flexShrink: 0 }}></div>
             {wines.map((wine, index) => {
               const isActive = index === activeIndex;
@@ -385,12 +453,15 @@ export default function WinesPage() {
                     flex: `0 0 ${cardWidth}px`,
                     scrollSnapAlign: 'center',
                     display: 'inline-block',
-                    transform: isActive ? 'scale(1)' : 'scale(0.6)',
                     zIndex: isActive ? '10' : '1',
                   }}>
                   <div className="relative">
                     <div
-                      className={`flex items-center justify-center absolute w-12 h-12 rounded-full bg-blue-primary price ${pricePosition}`}
+                      className={`flex items-center justify-center 
+                        absolute w-12 h-12 
+                        rounded-full 
+                        bg-blue-primary price
+                        ${isActive ? 'z-11' : 'z-1'}`}
                       style={isActive ? priceActive : null}>
                         <span className="text-offwhite text-lg font-semibold">${wine.price}</span>
                     </div>
@@ -398,18 +469,24 @@ export default function WinesPage() {
                       <img 
                         src={wine.imageUrl} 
                         alt={wine.name} 
-                        className={`w-full ${isMobile ? 'h-54' :'h-94'} object-contain`} />
+                        className={` 
+                          object-cover
+                          ${isActive ? 'scale-100' : 'scale-60'}
+                          transition`} />
                     )}
                     {!wine.imageUrl && (
                       <img 
                         src='/wine_bottle.webp' 
                         alt={wine.name} 
-                        className={`w-full ${isMobile ? 'h-54' :'h-94'} 
-                        object-contain`} />
+                        className={`w-full 
+                          
+                          object-cover
+                          ${isActive ? 'scale-100' : 'scale-60'}
+                          transition`} />
                     )}
                     <div className={`wine-details flex items-center flex-wrap absolute pt-2 ${isActive ? 'opacity-100' : 'opacity-0'}`}
                       style={wineDetailsPosition}>
-                      <h3 className="text-2xl font-medium text-offwhite uppercase transition w-full text-center tracking-wider leading-none">
+                      <h3 className="text-2xl text-offwhite uppercase transition w-full text-center tracking-wider leading-none">
                         {wine.name}
                       </h3>
                       <p className="text-offblack font-semibold text-base mt-1 w-full text-center">{wine.producer?.name}</p>
