@@ -35,14 +35,44 @@ export default function WineDetailPage() {
   const orderRef = useRef(null);
 
   useLayoutEffect(() => {
-    if (!isMobile) return;
-
     const orderSection = orderRef.current;
     if (!orderSection) return;
 
     const footerH = document.querySelector('footer').getBoundingClientRect().height;
-    orderSection.style.bottom = `${footerH + 5}px`;
-  },[isMobile, wine]);
+    orderSection.style.bottom = `${footerH}px`;
+  },[wine]);
+
+  // SET + & - TO SQUARE
+  const addToOrderRef = useRef(null);
+  const minusRef = useRef(null);
+  const addRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!addToOrderRef.current || !minusRef.current || !addRef.current) return;
+
+    const buttonH = addToOrderRef.current.getBoundingClientRect().height;
+    const setSize = (ele) => {
+      ele.style.height = `${buttonH}px`;
+      ele.style.width = `${buttonH}px`;
+    };
+
+    setSize(minusRef.current);
+    setSize(addRef.current);
+  }, [isMobile, wine]);
+
+  //ADD ORDER BUTTON HEIGHT TO BOTTOM OF SCREEN
+  const containerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!containerRef.current || !orderRef.current) return;
+
+    const footerH = document.querySelector('footer').getBoundingClientRect().height;
+    const padding = orderRef.current.getBoundingClientRect().height;
+    containerRef.current.style.paddingBottom = `${padding + (footerH * 2)}px`;
+  }, [wine]);
+
+  //POSITION PRICE CORRECTLY ALWAYS
+  
 
 
   if (loading || !wine) return <div className="text-center py-12 text-stone-500">Loading...</div>
@@ -55,30 +85,35 @@ export default function WineDetailPage() {
           Back
       </Link>
 
-      <div className={`flex overflow-hidden flex-wrap items-center justify-center ${ isMobile ? 'flex-col' : 'flex-row'}`}>
-        <div className="basis-1/3 align-center justify-center flex relative">
+      <div 
+        ref={containerRef}
+        className={`flex overflow-hidden flex-wrap items-center justify-center ${ isMobile ? 'flex-col' : 'flex-row h-full'}`}>
+        <div className={`basis-1/2 align-end justify-end flex relative ${isMobile ? 'w-full pb-1' : ''}`}>
           <div
-            className={`absolute top-[30%] ml-[15%] shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-blue-primary price price-active scale-[1.25]`}>
+            className={`absolute top-[30%] left-[55%] shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-blue-primary price price-active scale-[1.25]`}>
               <span className="text-offwhite text-lg font-semibold">${wine.price}</span>
           </div>
           {wine.imageUrl && (
-            <img src={wine.imageUrl} alt={wine.name} className="w-full h-80 object-cover" />
+            <img 
+              src={wine.imageUrl} 
+              alt={wine.name} 
+              className={`object-cover ${isMobile ? 'w-full h-114' : 'h-140'}`} />
           )}
           {!wine.imageUrl && (
             <img 
               src='/wine_bottle.webp' 
               alt={wine.name} 
-              className='w-full h-94 object-contain' />
+              className={`object-contain ${isMobile ? 'w-full h-114' : 'h-140'}`} />
           )}
         </div>
 
-        <div className="basis-2/3 flex flex-wrap content-start">
+        <div className={`basis-1/2 flex flex-wrap content-start ${isMobile ? '' : 'pr-6'}`}>
           <div className={`${isMobile ? '' : 'basis-2/3'}`}>
-            <h1 className="text-3xl font-bold text-offwhite mb-2 uppercase tracking-wider">{wine.name}</h1>
+            <h1 className="text-3xl font-semibold text-offwhite uppercase tracking-wider">{wine.name}</h1>
           </div>
 
           <div className={`basis-full noshrink`}>
-            <Link to={`/producers/${wine.producer?._id}`} className="mt-2 text-offblack hover:text-red-secondary font-semibold text-base">
+            <Link to={`/producers/${wine.producer?._id}`} className="mt-1 text-offblack hover:text-red-secondary font-semibold text-base">
               {wine.producer?.name}
             </Link>
 
@@ -97,14 +132,13 @@ export default function WineDetailPage() {
           <div className={`${isMobile ? 'order-4' : ''} basis-full`}>
             {wine.description && (
               <div className="mt-3 w-full">
-                <h3 className="font-semibold text-stone-900 mb-2">Description</h3>
-                <p className="text-stone-600 whitespace-pre-line">{wine.description}</p>
+                <p className="text-offblack text-sm whitespace-pre-line text-justify">{wine.description}</p>
               </div>
             )}
 
             {wine.producer?.description && (
               <div className="mt-3 w-full">
-                <p className="text-offblack text-sm whitespace-pre-line">{wine.producer.description}</p>
+                <p className="text-offblack text-sm whitespace-pre-line text-justify">{wine.producer.description}</p>
               </div>
             )}
           </div>
@@ -113,7 +147,7 @@ export default function WineDetailPage() {
 
         <div 
           ref={orderRef}
-          className={`flex items-center justify-center pl-4 ${isMobile ? 'fixed' : ''}`}>
+          className={`flex items-center justify-center fixed`}>
           {user &&
             <div>
               {user.role === 'admin' &&
@@ -130,26 +164,69 @@ export default function WineDetailPage() {
           }
 
           {wine.stock > 0 && (
-            <div className="flex items-center">
+            <div className="flex flex-col items-center justify-center gap-1 w-full">
+              <div className="flex gap-1 w-full items-center justify-center">
+                <button
+                  ref={minusRef}
+                  onClick={() => {
+                    setQuantity((prev) => {
+                      const value = Math.max(1, Math.min(wine.stock, prev - 1));
+                      return value;
+                    })
+                  }}
+                  className="grow-0
+                            text-center 
+                            rounded-full bg-offwhite
+                            font-semibold 
+                            text-red-primary hover:text-offwhite hover:bg-red-secondary 
+                            transition 
+                            px-3 py-2">
+                    -
+                </button>
+                <div className="flex items-center justify-center group rounded-full bg-offwhite hover:bg-red-secondary transition text-left px-3 py-2 grow-0 text-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max={wine.stock}
+                    value={quantity}
+                    onChange={(e) => {
+                      const value = Math.max(1, Math.min(wine.stock, Number(e.target.value)))
+                      setQuantity(value)
+                    }}
+                    className="inline-block 
+                              text-red-primary 
+                              group-hover:text-offwhite font-semibold 
+                              focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                              text-center"
+                  />
+                </div>
+                <button
+                  ref={addRef}
+                  onClick={() => {
+                    setQuantity((prev) => {
+                      const value = Math.max(1, Math.min(wine.stock, prev + 1));
+                      return value;
+                    })
+                  }}
+                  className="grow-0 
+                            rounded-full bg-offwhite
+                            font-semibold text-red-primary hover:text-offwhite hover:bg-red-secondary 
+                            transition 
+                            px-3 py-2">
+                    +
+                </button>
+              </div>
               <button
+                ref={addToOrderRef}
                 onClick={handleAddToCart}
-                className="bg-transparent text-offblack px-1 py-2 font-semibold tracking-close hover:text-red-secondary transition"
-              >
+                className="rounded-full grow
+                          bg-offwhite
+                          font-semibold text-red-primary hover:text-offwhite hover:bg-red-secondary
+                          transition text-center
+                          px-3 py-2
+                          w-full">
                 Add to Order
               </button>
-              <div className="flex items-center rounded">
-                <input
-                  type="number"
-                  min="1"
-                  max={wine.stock}
-                  value={quantity}
-                  onChange={(e) => {
-                    const value = Math.max(1, Math.min(wine.stock, Number(e.target.value)))
-                    setQuantity(value)
-                  }}
-                  className="text-center py-2 pr-1 bg-transparent text-offblack font-semibold skew-x-0 focus:outline-none focus:skew-x-[-12deg] hover:text-red-secondary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
             </div>
           )}
         </div>

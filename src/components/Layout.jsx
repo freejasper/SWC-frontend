@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout } from '../store/authSlice'
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { useWindowWidth } from '../utilities/useWindowWidth';
 
 import IconLogo from '../assets/IconLogo';
@@ -38,16 +38,33 @@ export default function Layout() {
     setNavActive(!navActive);
   }
 
+  //MAIN TOP PADDING
+  const logoRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const main = document.querySelector('main');
+    const logo = logoRef.current;
+
+    main.style.paddingTop = '0px';
+
+    if (!logo || !main) return;
+
+    const padding = logoRef.current.getBoundingClientRect().height;
+    main.style.paddingTop = `${padding - 20}px`;
+
+  }, [windowWidth, location]);
+
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden justify-center items-center">
+    <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden justify-start items-center">
 
       {!home &&
         <header
-          // ref={logoRef}
+          ref={logoRef}
           className={`
-            z-10
+            z-20
             text-offwhite
-            pb-6 
+            pb-6
+            fixed 
             ${isMobile ? 'pt-2 self-start px-4 sm:px-6 lg:px-8' : 'pt-0'} 
             flex`}>
           <Link to="/" className="hover:text-red-primary transition relative">
