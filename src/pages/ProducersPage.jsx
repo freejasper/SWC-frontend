@@ -15,7 +15,7 @@ export default function ProducersPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 flex flex-col flex-1 h-full">
-      <h1 className="text-4xl font-bold uppercase">Our Producers</h1>
+      <h1 className="text-4xl font-bold uppercase">Producers</h1>
       
       <div className="flex flex-col gap-6 py-6 mt-auto mb-6">
         {producers.map((producer) => (

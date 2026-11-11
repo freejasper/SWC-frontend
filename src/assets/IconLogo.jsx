@@ -32,7 +32,7 @@ export default function IconLogo ({width = 2712}) {
         //     </svg>
         // </>
         <>
-            <svg width="100%" height="100%" viewBox="0 0 2742 931" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:affinity="https://www.affinity.studio/" style={{fillRule: "evenodd", clipRule: "evenodd", strokeLinejoin: "round", strokeMiterlimit: "2"}}>
+            <svg width={`${width}px`} viewBox="0 0 2742 931" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:affinity="https://www.affinity.studio/" style={{fillRule: "evenodd", clipRule: "evenodd", strokeLinejoin: "round", strokeMiterlimit: "2"}}>
                 <g id="Artboard1" transform="matrix(0.602562,0,0,0.319367,0,0)">
                     <rect x="0" y="0" width="4549" height="2915" style={{fill:"none"}}/>
                     <clipPath id="_clip1">

@@ -13,7 +13,7 @@ export default function AdminProducers() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center gap-2 mb-8">
         <h1 className="text-3xl font-bold text-stone-900">Producers</h1>
         <Link to="/admin/producers/new" className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-500 transition">
           Add Producer

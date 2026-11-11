@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { useWindowWidth } from '../utilities/useWindowWidth';
 
 import IconLogo from '../assets/IconLogo';
+import WineSim from './WineSim';
 
 export default function Layout() {
   const { user } = useSelector((state) => state.auth)
@@ -56,12 +57,13 @@ export default function Layout() {
 
   return (
     <div className="h-[100dvh] min-h-[100dvh] w-full flex flex-col bg-red-primary p-0 m-0 overflow-hidden justify-start items-center">
+      <WineSim />
 
       {!home &&
         <header
           ref={logoRef}
           className={`
-            z-20
+            z-40
             text-offwhite
             pb-6
             fixed 
@@ -75,11 +77,11 @@ export default function Layout() {
         </header>
       }
 
-      <main className="flex-1 mx-auto w-full overflow-auto">
+      <main className="relative z-20 flex-1 mx-auto w-full overflow-auto">
         <Outlet />
       </main>
 
-      <nav className="z-1 fixed top-2 right-2 flex flex-wrap items-end justify-end gap-1">
+      <nav className="z-50 fixed top-2 right-2 flex flex-wrap items-end justify-end gap-1">
         <div className="w-12 h-12 flex items-center justify-center grow-0 rounded-full bg-offwhite text-red-primary hover:text-offwhite hover:bg-red-secondary transition">
           <Link to="/cart" className="relative">
             Cart

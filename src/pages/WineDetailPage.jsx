@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchWine } from '../store/winesSlice'
 import { addToCart } from '../store/cartSlice'
@@ -12,6 +12,7 @@ export default function WineDetailPage() {
   const { current: wine, loading } = useSelector((state) => state.wines)
   const [quantity, setQuantity] = useState(1)
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate()
 
   useEffect(() => {
     dispatch(fetchWine(id))
@@ -79,11 +80,11 @@ export default function WineDetailPage() {
 
   return (
     <div className="relative px-4 sm:px-6 lg:px-8 mx-auto h-[100%] overflowY-scroll">
-      <Link 
-        to="/wines" 
-        className="absolute text-offblack mb-6 inline-block font-semibold underline hover:text-red-secondary transition z-10">
+        <button 
+          onClick={() => navigate(-1)}
+          className="absolute text-offblack mb-6 inline-block font-semibold underline hover:text-red-secondary transition z-10">
           Back
-      </Link>
+        </button>
 
       <div 
         ref={containerRef}

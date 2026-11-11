@@ -8,7 +8,7 @@ export default function AdminUsers() {
 
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' })
+  const [form, setForm] = useState({ name: '', username: '', password: '', role: 'user' })
   const [saving, setSaving] = useState(false)
   const [orders, setOrders] = useState(null)
   const [ordersLoading, setOrdersLoading] = useState(false)
@@ -30,12 +30,12 @@ export default function AdminUsers() {
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.trim() || !form.password) return
+    if (!form.name.trim() || !form.username.trim() || !form.password) return
     setSaving(true)
     try {
       await createUser(form)
       toast.success('User created')
-      setForm({ name: '', email: '', password: '', role: 'user' })
+      setForm({ name: '', username: '', password: '', role: 'user' })
       loadUsers()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create user')
@@ -87,9 +87,9 @@ export default function AdminUsers() {
               className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-stone-600 mb-1">Email</label>
-            <input type="email" required value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            <label className="block text-sm font-medium text-stone-600 mb-1">Username</label>
+            <input type="text" required value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
               className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
           </div>
           <div className="w-40">
@@ -124,7 +124,7 @@ export default function AdminUsers() {
             <thead className="bg-stone-50 border-b border-stone-200">
               <tr>
                 <th className="px-4 py-3 text-sm font-medium text-stone-600">Name</th>
-                <th className="px-4 py-3 text-sm font-medium text-stone-600">Email</th>
+                <th className="px-4 py-3 text-sm font-medium text-stone-600">Username</th>
                 <th className="px-4 py-3 text-sm font-medium text-stone-600">Role</th>
                 <th className="px-4 py-3 text-sm font-medium text-stone-600">Created</th>
                 <th className="px-4 py-3 text-sm font-medium text-stone-600">Actions</th>
@@ -134,7 +134,7 @@ export default function AdminUsers() {
               {users.map((u) => (
                 <tr key={u._id} className="hover:bg-stone-50">
                   <td className="px-4 py-3 font-medium text-stone-900">{u.name}</td>
-                  <td className="px-4 py-3 text-stone-600">{u.email}</td>
+                  <td className="px-4 py-3 text-stone-600">{u.username}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       u.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600'

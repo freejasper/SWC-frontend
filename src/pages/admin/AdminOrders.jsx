@@ -44,7 +44,7 @@ export default function AdminOrders() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-sm text-stone-500">
-                    Order #{order._id.slice(-8)} &middot; {order.user?.name} ({order.user?.email})
+                    Order #{order._id.slice(-8)} &middot; {order.user?.name} ({order.user?.username})
                   </p>
                   <p className="text-sm text-stone-500">{new Date(order.createdAt).toLocaleString()}</p>
                 </div>

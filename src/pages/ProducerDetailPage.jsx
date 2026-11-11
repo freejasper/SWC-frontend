@@ -1,46 +1,84 @@
-import { useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchProducer } from '../store/producersSlice'
 import { fetchWines } from '../store/winesSlice'
+import WineCardScroller from '../components/WineCardScroller'
 
 export default function ProducerDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { current: producer, loading } = useSelector((state) => state.producers)
-  const { list: wines } = useSelector((state) => state.wines)
+  const { list: wines, loading: winesLoading } = useSelector((state) => state.wines)
+  const { user } = useSelector((state) => state.auth)
+
+  const imageRef = useRef(null)
+  const titleRef = useRef(null)
+  const descRef = useRef(null)
+  const headingRef = useRef(null)
+  const winesContListRef = useRef(null)
 
   useEffect(() => {
     dispatch(fetchProducer(id))
     dispatch(fetchWines({ producer: id }))
   }, [dispatch, id])
 
-  if (loading || !producer) return <div className="text-center py-12 text-stone-500">Loading...</div>
+  useLayoutEffect(() => {
+    const header = document.querySelector('header')
+    const winesContList = winesContListRef.current
 
-  const producerWines = wines.filter((w) => w.producer?._id === id)
+    if (!header || !winesContList) return
+
+    const handleResize = () => {
+      const headerH = header.getBoundingClientRect().height
+      const imageH = imageRef.current ? imageRef.current.getBoundingClientRect().height : 0
+      const titleH = titleRef.current ? titleRef.current.getBoundingClientRect().height : 0
+      const descH = descRef.current ? descRef.current.getBoundingClientRect().height : 0
+      const headingH = headingRef.current ? headingRef.current.getBoundingClientRect().height : 0
+      const marginBuffer = 64
+
+      const remainingHeight = window.innerHeight - headerH - imageH - titleH - descH - headingH - marginBuffer
+
+      if (remainingHeight > 600) {
+        winesContList.style.height = `${remainingHeight}px`;
+      } else {
+        winesContList.style.height = '600px';
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    handleResize()
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [wines])
+
+  if (loading || winesLoading || !producer) return <div className="text-center py-12 text-stone-500">Loading...</div>
 
   return (
-    <div>
-      {producer.imageUrl && (
-        <img src={producer.imageUrl} alt={producer.name} className="w-full h-64 object-cover rounded-lg mb-8" />
-      )}
-      <h1 className="text-3xl font-bold text-stone-900 mb-4">{producer.name}</h1>
-      <p className="text-stone-600 whitespace-pre-line mb-8">{producer.description}</p>
+    <>
+      <div className="px-4 sm:px-6 lg:px-8">
+        <button 
+          onClick={() => navigate(-1)}
+          className="text-offblack mb-6 inline-block font-semibold underline hover:text-red-secondary transition z-10">
+          Back
+        </button>
+        {producer.imageUrl && (
+          <img ref={imageRef} src={producer.imageUrl} alt={producer.name} className="w-full h-64 object-cover rounded-lg mb-8" />
+        )}
+        <h1 ref={titleRef} className="text-3xl font-bold text-stone-900 mb-4">{producer.name}</h1>
+        <p ref={descRef} className="text-offblack whitespace-pre-line mb-8 w-2/3">{producer.description}</p>
 
-      <h2 className="text-2xl font-semibold text-stone-900 mb-4">Wines</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {producerWines.map((wine) => (
-          <Link
-            key={wine._id}
-            to={`/wines/${wine._id}`}
-            className="bg-white rounded-lg shadow-sm border border-stone-200 p-4 hover:shadow-md transition"
-          >
-            <h3 className="font-semibold text-stone-900">{wine.name}</h3>
-            <p className="text-stone-500 text-sm">{wine.varietal?.name} &middot; {wine.colour?.name}</p>
-            <p className="text-amber-600 font-bold mt-2">${wine.price}</p>
-          </Link>
-        ))}
+        <h2 ref={headingRef} className="text-xl font-semibold text-offblack mb-4">Wines</h2>
       </div>
-    </div>
+      <div ref={winesContListRef} className="flex-1 w-full items-center overflow-y-hidden">
+          {wines.length === 0 && (
+            <div className="text-center py-12 text-offwhite">No wines from this producer.</div>
+          )}
+          {wines.length > 0 && <WineCardScroller wines={wines} user={user} />}
+      </div>
+    </>
   )
 }
