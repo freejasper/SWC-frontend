@@ -25,8 +25,8 @@ export default function WineSim() {
         get vector() { return this._vector }
         set vector(vector) { this._vector = vector }
         updatePosition(fx = 0, fy = 0) {
-          this.vector[0] = p.constrain(this.vector[0] + fx, -5, 5)
-          this.vector[1] = p.constrain(this.vector[1] + fy, -5, 5)
+          this.vector[0] = p.constrain(this.vector[0] + fx, -7, 7)
+          this.vector[1] = p.constrain(this.vector[1] + fy, -7, 7)
           this.vector[0] *= friction
           this.vector[1] *= friction
           this.x += this.vector[0]
@@ -48,7 +48,7 @@ export default function WineSim() {
       let dropDist = cellSize + 7
       let mDropDist = dropDist + 40
       let startTime = null
-      const totalDroplets = 1000
+      const totalDroplets = 500
       const spawnDuration = 5000
 
       let gravity = 0.5
@@ -58,14 +58,14 @@ export default function WineSim() {
         wineShader = await p.loadShader('/wine.vert', '/wine.frag')
         p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL)
         p.pixelDensity(1)
-        // p.canvas.style.filter = 'blur(12px) contrast(60)'
         p.canvas.style.pointerEvents = 'none'
-        // p.canvas.stylemixBlendMode = 'screen'
         startTime = p.millis()
       }
 
       p.draw = async () => {
-        p.background(255, 255, 255)
+        p.background(219, 54, 5)
+
+        p.shader(wineShader)
 
         const now = p.millis()
         let target
@@ -76,6 +76,7 @@ export default function WineSim() {
         }
         while (droplets.length < target) {
           droplets.push(new Droplet(p.width / 2, 0))
+          wineShader.setUniform('u_activeCount', droplets.length);
         }
 
         let forces = droplets.map(() => ({ x: 0, y: gravity }))
@@ -143,16 +144,13 @@ export default function WineSim() {
           let fy = forces[i].y
 
           droplet.updatePosition(fx, fy)
-          // p.fill(0)
-          // p.noStroke()
-          // p.ellipse(droplet.x, droplet.y, dropSize, dropSize)
         })
 
-        p.shader(wineShader)
+        
 
         wineShader.setUniform('u_resolution', [p.width, p.height])
 
-        const dropletData = new Float32Array(1000)
+        const dropletData = new Float32Array(500)
         droplets.forEach((d, i) => {
           dropletData[i * 2] = d.x
           dropletData[i * 2 + 1] = p.height - d.y
@@ -175,20 +173,6 @@ export default function WineSim() {
     }
   }, [])
 
-  // return (
-  //   <div className="fixed inset-0 z-10 w-full h-full bg-[#db3605] pointer-events-none overflow-hidden isolate">
-  
-  //     <div className="absolute inset-0 w-full h-full mix-blend-darken">
-        
-  //       <div className="absolute inset-0 w-full h-full bg-[#bf0503]" />
-        
-  //       <div 
-  //         ref={containerRef} 
-  //         className="absolute inset-0 w-full h-full mix-blend-screen" 
-  //       />
-  //     </div>
-  //   </div>
-  // )
   return (
     <div 
       ref={containerRef} 
