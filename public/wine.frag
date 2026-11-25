@@ -4,7 +4,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 
-uniform vec2 u_droplets[250];
+uniform vec2 u_droplets[1000];
 uniform int u_activeCount;
 
 out vec4 outColor;
@@ -18,11 +18,11 @@ void main() {
     float radius = 0.08;
     float aspect = u_resolution.x / u_resolution.y;
 
-    int count = clamp(u_activeCount, 0, 250);
+    int count = clamp(u_activeCount, 0, 1000);
 
-    for (int i = 0; i < 250; i++) {
+    for (int i = 0; i < 1000; i++) {
         if (i >= count) break;
-        vec2 dropletPos = u_droplets[i] / u_resolution;
+        vec2 dropletPos = u_droplets[i];
 
 
         float yDiff = abs(uv.y - dropletPos.y);
