@@ -8,7 +8,7 @@ export default function WineSim() {
     const container = containerRef.current
     if (!container) return
 
-    const sketch = (p) => {
+    const sketch = async (p) => {
       let friction = 0.98
 
 
@@ -53,16 +53,18 @@ export default function WineSim() {
 
       let gravity = 0.5
 
-      p.setup = () => {
-        p.createCanvas(window.innerWidth, window.innerHeight)
+      let wineShader;
+      p.setup = async () => {
+        wineShader = await p.loadShader('/wine.vert', '/wine.frag')
+        p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL)
         p.pixelDensity(1)
-        p.canvas.style.filter = 'blur(12px) contrast(60)'
+        // p.canvas.style.filter = 'blur(12px) contrast(60)'
         p.canvas.style.pointerEvents = 'none'
-        p.canvas.stylemixBlendMode = 'screen'
+        // p.canvas.stylemixBlendMode = 'screen'
         startTime = p.millis()
       }
 
-      p.draw = () => {
+      p.draw = async () => {
         p.background(255, 255, 255)
 
         const now = p.millis()
@@ -141,10 +143,24 @@ export default function WineSim() {
           let fy = forces[i].y
 
           droplet.updatePosition(fx, fy)
-          p.fill(0)
-          p.noStroke()
-          p.ellipse(droplet.x, droplet.y, dropSize, dropSize)
+          // p.fill(0)
+          // p.noStroke()
+          // p.ellipse(droplet.x, droplet.y, dropSize, dropSize)
         })
+
+        p.shader(wineShader)
+
+        wineShader.setUniform('u_resolution', [p.width, p.height])
+
+        const dropletData = new Float32Array(1000)
+        droplets.forEach((d, i) => {
+          dropletData[i * 2] = d.x
+          dropletData[i * 2 + 1] = p.height - d.y
+        })
+        wineShader.setUniform('u_droplets', dropletData)
+
+        p.noStroke()
+        p.rect(-p.width / 2, -p.height / 2, p.width, p.height)
       }
 
       p.windowResized = () => {
@@ -159,18 +175,24 @@ export default function WineSim() {
     }
   }, [])
 
-  return (
-    <div className="fixed inset-0 z-10 w-full h-full bg-[#db3605] pointer-events-none overflow-hidden isolate">
+  // return (
+  //   <div className="fixed inset-0 z-10 w-full h-full bg-[#db3605] pointer-events-none overflow-hidden isolate">
   
-      <div className="absolute inset-0 w-full h-full mix-blend-darken">
+  //     <div className="absolute inset-0 w-full h-full mix-blend-darken">
         
-        <div className="absolute inset-0 w-full h-full bg-[#bf0503]" />
+  //       <div className="absolute inset-0 w-full h-full bg-[#bf0503]" />
         
-        <div 
-          ref={containerRef} 
-          className="absolute inset-0 w-full h-full mix-blend-screen" 
-        />
-      </div>
-    </div>
+  //       <div 
+  //         ref={containerRef} 
+  //         className="absolute inset-0 w-full h-full mix-blend-screen" 
+  //       />
+  //     </div>
+  //   </div>
+  // )
+  return (
+    <div 
+      ref={containerRef} 
+      className="absolute inset-0 w-full h-full" 
+    />
   )
 }
